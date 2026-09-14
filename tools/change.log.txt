@@ -128,3 +128,87 @@ music_player.html
 
 music_player.py
 - generate_html_template: also substitutes {{PLACEHOLDER_IMAGE}} in the HTML template (previously only {{SONGS_COUNT}} was replaced).
+
+2026-09-14
+electron/main.js
+- Moved main window creation and window-state persistence into window-manager.js.
+- Moved loading/progress window handling into loading-window.js.
+- main.js now keeps application bootstrap and IPC handlers while using the extracted window modules.
+
+build/music_player.py
+- Added window-manager.js and loading-window.js to the Electron files copied into App.
+
+tools/prompt.txt
+- Updated the Electron file structure and file descriptions for the new window modules.
+- Updated the build-script description to reflect copying all Electron runtime files.
+
+electron/window-manager.js
+- Added main BrowserWindow creation and window-state load/save handling extracted from main.js.
+
+electron/loading-window.js
+- Added loading window creation, progress updates, and cleanup extracted from main.js.
+
+2026-09-14
+tools/prompt.txt
+- Updated the Electron folder tree to include window-manager.js and loading-window.js.
+2026-09-14
+electron/main.js
+- Replaced duplicated scanner-process logic in dropped-file import, download-and-scan, rebuild-from-folders, change-folder, and welcome-select-folder with scanner.js calls.
+- Preserved each caller's scan arguments, progress channels, result type, merge order, and rebuild folderMetadata updates.
+
+electron/scanner.js
+- Added shared scan child-process execution, stdout/stderr progress parsing, JSON extraction, player.js song merging, dropped-file scanning, downloaded-file scanning, folder rebuilds, and normal folder scans.
+- Preserved append order for dropped-file imports and prepend order for downloaded files.
+
+2026-09-14
+build/music_player.py
+- Added scanner.js to the Electron runtime files copied into App.
+
+tools/prompt.txt
+- Added scanner.js to the Electron structure and file descriptions.
+- Documented scanner.js as the shared scan orchestration layer while preserving per-entry-point behavior.
+
+
+2026-09-14
+electron/main.js
+- Moved music-folder configuration operations to music-folders.js while keeping dialog handling, scan orchestration, and loading-window control in main.js.
+- Kept rebuild-from-folders responsible for reading folders, running the scanner, and updating folder song counts after a successful scan.
+
+electron/scanner.js
+- Removed music-folder configuration and folderMetadata updates from rebuildFromFolders so scanner.js only handles scanning and scan results.
+
+electron/music-folders.js
+- Added music-folder configuration reading/writing, duplicate validation, folder removal, folder statistics, and rebuild song-count metadata updates.
+
+build/music_player.py
+- Added music-folders.js to the Electron runtime files copied into App.
+
+tools/prompt.txt
+- Added music-folders.js to the Electron structure and file descriptions.
+- Documented the boundary between folder configuration logic and scan/loading orchestration.
+
+
+2026-09-14
+electron/downloads.js
+- Added shared download-folder configuration access, download target selection, remote file downloading, filename collision handling, and download-folder reset.
+
+electron/file-operations.js
+- Added lyrics file open/save operations using the main window reference from window-manager.js.
+
+electron/window-manager.js
+- Added getMainWindow() and centralized ownership of the main window reference.
+
+electron/main.js
+- Delegated download-folder configuration, downloading, and lyrics file operations to dedicated modules while preserving renderer download progress and scanner-based download-and-scan behavior.
+build/music_player.py
+- Added downloads.js and file-operations.js to the Electron runtime files copied into App.
+tools/prompt.txt
+- Added downloads.js and file-operations.js to the Electron structure and file descriptions and documented their boundaries.
+
+
+2026-09-14
+electron/main.js
+- Moved welcome-select-folder IPC registration outside the first-run needsSetup branch so the channel is registered consistently while preserving its first-run behavior.
+- Routed the welcome-folder scan through scanner.js scanFolder() instead of keeping a separate inline scan implementation.
+tools/prompt.txt
+- Documented main.js ownership of the first-run welcome-select-folder IPC flow.

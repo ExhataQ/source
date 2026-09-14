@@ -39,7 +39,13 @@ Source/
 │   ├── main.js
 │   ├── preload.js
 │   ├── package.json
-│   └── scan-folder.js
+│   ├── scan-folder.js
+│   ├── window-manager.js
+│   ├── loading-window.js
+│   ├── scanner.js
+│   ├── music-folders.js
+│   ├── downloads.js
+│   └── file-operations.js
 └── tools/
     ├── rebuild.bat
     ├── clean_for_share.py
@@ -109,15 +115,24 @@ Files that do NOT need dual updates:
 - src/js/10-playback.js - Playback, shuffle, queue, play current view
 - src/js/11-lrc.js - LRC parsing, synced lyrics, sync editor
 - src/js/12-color-extract.js - Dominant color extraction
-- electron/main.js - Electron main process (copied to App)
+- electron/main.js - Electron main-process orchestration and IPC handlers (copied to App)
+- electron/window-manager.js - Main window creation, window-state persistence, and access to the main window reference (copied to App)
+- electron/loading-window.js - Loading window creation, progress updates, and cleanup (copied to App)
+- electron/scanner.js - Shared scanner process orchestration, progress handling, JSON parsing, and scan-result merging (copied to App)
+- electron/music-folders.js - Music-folder configuration reading/writing, validation, folder statistics, and rebuild song-count metadata (copied to App)
+- electron/downloads.js - Download-folder configuration, download target selection, remote file downloading, filename collision handling, and download-folder reset (copied to App)
+- electron/file-operations.js - Lyrics file open/save operations using the main window reference from window-manager.js (copied to App)
 - electron/preload.js - Electron preload script (copied to App)
 - electron/package.json - Electron config (copied to App)
+- electron/scan-folder.js - Runtime audio scanner (copied to App)
+
+Electron main-process structure: main.js owns IPC registration and application bootstrap, including the first-run welcome-select-folder flow; window-manager.js owns the main window and window-state persistence; loading-window.js owns the scan/loading progress window; scanner.js owns shared scan-process execution, progress handling, result parsing, and scan-result merging while preserving the behavior of each scan entry point; music-folders.js owns music-folder configuration and folder metadata operations while main.js retains scan and loading-window orchestration; downloads.js owns download-folder configuration and remote file downloading while main.js retains IPC and delegates the downloaded file to scanner.js for scanning and merging; file-operations.js owns lyrics file dialog and filesystem operations and gets the main window from window-manager.js.
 
 Note: fonts are self-healing. Source fonts live in Source/tools/fonts/ and are copied to App/MusicPlayerOutput/fonts/ on every build. If any font file is missing from both, music_player.py downloads them from CDN. all.min.css paths are rewritten from url(../webfonts/...) to url(...) after download.
 
 Source/build/ contains:
 
-music_player.py — Python build script (paths, deployed-data extraction, font self-heal, HTML/JS generation — replaces {{SONGS_COUNT}} and {{PLACEHOLDER_IMAGE}} in music_player.html, Electron launch).
+music_player.py — Python build script (paths, deployed-data extraction, font self-heal, HTML/JS generation — replaces {{SONGS_COUNT}} and {{PLACEHOLDER_IMAGE}} in music_player.html, copies all Electron runtime files, Electron launch).
 
 music_player.html — HTML template with {{SONGS_COUNT}} and {{PLACEHOLDER_IMAGE}} placeholders. Left panel header includes a collapsed-folder-back-btn (id="collapsed-folder-back-btn", shown via .visible when the panel is collapsed and a folder is open). #player-cover and #album-art-image use src="{{PLACEHOLDER_IMAGE}}" and inline onerror handlers with the data URI baked in. Loads scripts in order: js/00-state.js, js/01-sizes.js, js/02-ghost-list.js, js/03-storage.js, js/04-ui-systems.js, js/05-lazy-load.js, js/06-ui-render.js, js/07-views.js, js/08-panels.js, js/09-folders-playlists.js, js/10-playback.js, js/11-lrc.js, js/12-color-extract.js, then player.js (generated, at root) last.
 
@@ -177,10 +192,14 @@ Source/src/js/ contains (loaded in numeric order):
 
 Source/electron/ contains:
 
-main.js — Electron main process.
+main.js — Electron main-process orchestration and IPC registration.
 preload.js — contextBridge electronAPI.
 package.json — Minimal Electron config.
 scan-folder.js — Node.js music-metadata scanner (see AUDIO FILE PROCESSING ARCHITECTURE above).
+window-manager.js — Main BrowserWindow creation and window-state persistence.
+loading-window.js — Loading window creation, progress updates, and cleanup.
+scanner.js — Shared scan-process execution, progress parsing, JSON extraction, and player.js merging.
+music-folders.js — Music-folder configuration reading/writing, duplicate validation, folder statistics, and rebuild song-count metadata.
 
 Source/tools/ contains dev utilities and asset sources:
 - change.log — append-only log of file changes (date, file name, and bullet list of what changed)

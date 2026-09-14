@@ -174,7 +174,7 @@ def generate_html_template(songs_data, placeholder_image):
 
     electron_dir = os.path.join(source_root, "electron")
     if os.path.exists(electron_dir):
-        for config_file in ["main.js", "preload.js", "package.json", "scan-folder.js"]:
+        for config_file in ["main.js", "preload.js", "package.json", "scan-folder.js", "window-manager.js", "loading-window.js", "scanner.js", "music-folders.js", "downloads.js", "file-operations.js"]:
             src = os.path.join(electron_dir, config_file)
             dst = os.path.join(app_dir, config_file)
             if os.path.exists(src):
