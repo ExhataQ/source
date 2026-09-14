@@ -206,8 +206,12 @@ function confirmCreatePlaylist() {
     const newPlaylist = createPlaylist(name);
     closePlaylistModal();
 
-    renderPlaylistsView();
-    renderLeftPanelMainList();
+    if (currentOpenFolderId) {
+        renderFolderContents(currentOpenFolderId);
+    } else {
+        renderPlaylistsView();
+        renderLeftPanelMainList();
+    }
     showNotification(`Playlist "${escapeHtml(name)}" created`, 'success', 2000);
     updateScrollbarById('left-panel-main-content');
 }
@@ -398,12 +402,16 @@ function confirmCreateFolder() {
 
     if (currentOpenFolderId) {
         addToFolder(currentOpenFolderId, newFolder.id, 'folder');
-        renderFolderContents(currentOpenFolderId);
     }
 
     closePlaylistModal();
-    renderFoldersView();
-    renderLeftPanelMainList();
+
+    if (currentOpenFolderId) {
+        renderFolderContents(currentOpenFolderId);
+    } else {
+        renderFoldersView();
+        renderLeftPanelMainList();
+    }
     showNotification(`Folder "${escapeHtml(name)}" created`, 'success', 2000);
     updateScrollbarById('left-panel-main-content');
 }

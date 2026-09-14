@@ -23,6 +23,7 @@ const {
 } = require('./music-folders');
 const { getDownloadFolder, saveDownloadFolder, resetDownloadFolder, download } = require('./downloads');
 const { saveLyricsFile, readLyricsFile } = require('./file-operations');
+const { searchLyrics, downloadLyricsFile } = require('./online-lyrics');
 
 
 ipcMain.handle('import-dropped-files', async (event, filePaths, targetView) => {
@@ -49,6 +50,22 @@ ipcMain.handle('download-and-scan', async (event, url, isTemp) => {
     const outputDir = path.join(__dirname, 'MusicPlayerOutput');
     const scanResult = await scanDownloadedFile(downloadFolder, outputDir, result.filePath, isTemp);
     return scanResult;
+});
+
+ipcMain.handle('search-online-lyrics', async (event, params) => {
+    try {
+        return await searchLyrics(params || {});
+    } catch (error) {
+        return { success: false, error: error.message || 'Failed to search LRCLIB' };
+    }
+});
+
+ipcMain.handle('download-online-lyrics', async (event, params) => {
+    try {
+        return await downloadLyricsFile(params || {});
+    } catch (error) {
+        return { success: false, error: error.message || 'Failed to save lyrics' };
+    }
 });
 
 ipcMain.handle('get-music-folders', async () => {

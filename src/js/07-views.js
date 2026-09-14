@@ -164,7 +164,7 @@ function setSubheroVisibility(view) {
     const subheroSection = document.getElementById('subhero-section');
     if (!subheroSection) return;
 
-    if (view === 'settings' || view === 'search-history' || view === 'lyrics') {
+    if (view === 'settings' || view === 'search-history' || view === 'lyrics' || view === 'online-lyrics') {
         subheroSection.style.display = 'none';
     } else {
         subheroSection.style.display = '';
@@ -279,6 +279,15 @@ const viewConfigs = {
         render: () => renderSearchHistoryView(),
         finalize: (listId) => refreshUIAfterViewSwitch()
     },
+    'online-lyrics': {
+        heroTitle: '',
+        heroLabel: '',
+        showClear: false,
+        showHero: false,
+        getCount: () => 0,
+        render: () => renderOnlineLyricsView(),
+        finalize: (listId) => refreshUIAfterViewSwitch()
+    },
     lyrics: {
         heroTitle: 'Lyrics',
         heroLabel: 'Now Playing',
@@ -295,6 +304,18 @@ const viewHandlers = {
         enter: () => {
             closeSettingsPanelOnly();
             openSettingsPanel();
+        }
+    },
+    'online-lyrics': {
+        enter: () => {
+            currentView = 'online-lyrics';
+            resetLeftPanelActiveState();
+            resetViewScroll();
+            setSubheroVisibility('online-lyrics');
+            showHeroSection(false);
+            showTracklistHeader(false);
+            updateHeroCover('online-lyrics');
+            renderOnlineLyricsView();
         }
     },
     lyrics: {
@@ -805,21 +826,21 @@ function switchToLyrics() {
 function switchView(view) {
     let isSameView = currentView === view;
 
-    if (currentView === 'lyrics' && view !== 'lyrics') {
+    if ((currentView === 'lyrics' || currentView === 'online-lyrics') && view !== 'lyrics' && view !== 'online-lyrics') {
         if (typeof teardownLyricsView === 'function') {
             teardownLyricsView();
         }
         isSameView = false;
     }
 
-    if (view !== 'lyrics') {
+    if (view !== 'lyrics' && view !== 'online-lyrics') {
         const lyricsRoot = document.getElementById('lyrics-view-root');
         if (lyricsRoot) lyricsRoot.style.display = 'none';
         const songListContainer = document.getElementById('song-list-container');
         if (songListContainer) songListContainer.style.display = '';
         document.body.classList.remove('in-lyrics-view');
     } else {
-        document.body.classList.add('in-lyrics-view');
+        document.body.classList.toggle('in-lyrics-view', view === 'lyrics');
     }
 
     if (virtualScrollState.enabled && view !== currentView) {
@@ -845,7 +866,7 @@ function switchView(view) {
         lyricsToggleBtn.classList.toggle('active', view === 'lyrics');
     }
 
-    if (view !== 'lyrics') {
+    if (view !== 'lyrics' && view !== 'online-lyrics') {
         if (view && view.startsWith('playlist-')) {
             activateLeftPanelItem('playlists');
             const playlistItem = document.querySelector(`.left-panel-main-item[data-view="${view}"]`);
@@ -903,7 +924,7 @@ function switchView(view) {
 
     const gradientWrapper = document.querySelector('.content-gradient-wrapper');
 
-    if (view === 'playlists' || view === 'settings' || view === 'search-history' || view === 'lyrics') {
+    if (view === 'playlists' || view === 'settings' || view === 'search-history' || view === 'lyrics' || view === 'online-lyrics') {
         showTracklistHeader(false);
         setupHeroSection(false);
         if (view === 'settings' && gradientWrapper) {

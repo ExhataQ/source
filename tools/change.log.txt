@@ -212,3 +212,166 @@ electron/main.js
 - Routed the welcome-folder scan through scanner.js scanFolder() instead of keeping a separate inline scan implementation.
 tools/prompt.txt
 - Documented main.js ownership of the first-run welcome-select-folder IPC flow.
+
+2026-09-14
+tools/prompt.txt
+- Updated the renderer architecture documentation to match the current split files 04a-ui-render-core.js, 04b-ui-render-views.js, 06a-context-menus.js, 06b-modals.js, and 06c-ui-widgets.js instead of the older combined file names.
+- Kept the current Electron architecture and Phase 5 welcome-select-folder/scanner boundaries documented.
+
+2026-09-15
+electron/scanner.js
+- Extracted pure JSON-array/object parsing and append/prepend song-merge helpers from scan-process orchestration.
+- Kept dropped-file scans append-only and downloaded-file scans prepend-first while preserving duplicate URL filtering and id assignment.
+
+electron/music-folders.js
+- Extracted pure folder duplicate, removal, and song-count helpers for direct unit testing.
+- Normalized folder removal with Windows path semantics and prevented sibling paths such as C:\\Music-other from being counted inside C:\\Music.
+
+src/js/03-storage.js
+- Added guarded getStoredJson() parsing and routed localStorage JSON reads through it so malformed stored arrays fall back safely instead of throwing during normal storage access.
+
+electron/package.json
+- Added a zero-dependency Node built-in test script using node --test.
+
+electron/tests/scanner.test.js
+- Added unit tests for scanner JSON extraction, append/prepend ordering, duplicate filtering, and empty input handling.
+
+electron/tests/music-folders.test.js
+- Added unit tests for folder duplicate detection, normalized removal, and song-count path boundaries.
+
+electron/tests/storage.test.js
+- Added tests for malformed and valid renderer localStorage JSON using a minimal VM/localStorage harness.
+
+tools/prompt.txt
+- Documented the new pure scanner/folder helpers, guarded storage parsing, Node test command, and Electron test files.
+- Updated the build-template script list to match the current split renderer architecture.
+
+
+2026-09-15
+
+electron/package.json
+- Updated the npm test command to run the permanent test suite from tools/tests/.
+
+tools/tests/scanner.test.js
+- Moved the scanner unit tests from electron/tests/ into the project-wide tools/tests/ directory.
+
+tools/tests/music-folders.test.js
+- Moved the music-folder unit tests from electron/tests/ into the project-wide tools/tests/ directory.
+
+tools/tests/storage.test.js
+- Moved the storage unit tests from electron/tests/ into the project-wide tools/tests/ directory.
+
+tools/prompt.txt
+- Documented tools/tests/ as the permanent automated test suite location and updated the npm test command description.
+
+tools/tests/scanner.test.js
+tools/tests/music-folders.test.js
+- Updated test module paths after moving the suite so the tests load Electron modules from electron/ correctly.
+
+2026-09-15
+src/js/19-online-lyrics.js
+electron/online-lyrics.js
+electron/main.js
+electron/preload.js
+src/js/04b-ui-render-views.js
+src/js/07-views.js
+src/css/styles.css
+build/music_player.py
+tools/prompt.txt
+- Added an online lyrics/LRC feature backed by LRCLIB.
+- Added a dedicated Online Lyrics view with automatic current-song search, editable artist/title/album fields, direct result display, preview, and actions to use, copy, or download plain lyrics and synced LRC.
+- Added Electron IPC and a main-process LRCLIB client so network requests and downloads stay outside the renderer.
+- Reused the existing lyrics storage system for selected online lyrics/LRC and the existing configured download folder for downloaded files.
+- Added the new renderer script to the build and documented the feature and architecture in prompt.txt.
+
+2026-09-15
+src/js/19-online-lyrics.js
+tools/change.log.txt
+- Added safe HTML-attribute escaping for editable online-lyrics search fields.
+
+
+2026-09-15
+build/music_player.html
+tools/change.log.txt
+- Fixed the generated renderer HTML to load js/19-online-lyrics.js before player.js. The build script was copying the new renderer file but the HTML template was not including its script tag, causing openOnlineLyricsView to be undefined in the built app.
+
+
+2026-09-15
+electron/online-lyrics.js
+src/js/19-online-lyrics.js
+src/css/styles.css
+tools/prompt.txt
+- Updated online lyrics search to include the exact LRCLIB match first while also retrieving the other LRCLIB search matches, allowing multiple lyric/LRC versions of the same song to be reviewed.
+- Added local result pagination with 10 results per page and Previous/Next navigation until the returned result set is exhausted.
+- Reset online-lyrics pagination when starting a new search and clear the expanded result when changing pages.
+- Documented the LRCLIB result limit and renderer-side pagination behavior in prompt.txt.
+
+
+2026-09-15
+src/js/19-online-lyrics.js
+src/css/styles.css
+tools/change.log.txt
+- Made lyric-type badges clickable so Synced LRC and Lyrics open their respective content.
+- Made the expanded result toggle closed when its header is clicked again.
+- Fixed the result action buttons to stop header/event propagation and work reliably.
+- Added LRC/Lyrics tabs inside expanded results and reset the selected type on new searches/page changes.
+
+2026-09-15 — Added a global Lyrics / LRC Search button beside Play from URL in the header. It uses the existing online-lyrics view, pre-fills the currently playing song when available without automatically searching, and leaves the fields empty when no song is playing. Reused the existing header button sizing, spacing, hover behavior, icon scale, and native tooltip treatment. Added openOnlineLyricsSearchView() while preserving the Lyrics-view entry point's automatic current-song search behavior.
+
+2026-09-15: Fixed direct global Lyrics / LRC header entry. The online lyrics renderer now creates its own lyrics-view-root when opened before the regular Lyrics view has initialized it, so the global search works from a fresh app state.
+
+
+2026-09-15
+electron/online-lyrics.js
+tools/prompt.txt
+tools/change.log.txt
+- Improved LRCLIB reliability by retrying temporary HTTP/network failures with short backoff delays. Exact-match failures no longer prevent the broader search from running. Searches using only one field now use LRCLIB's broad q query instead of sending an incomplete /api/get request, so Artist-only, Title-only, or Album-only searches are supported.
+
+
+2026-09-15
+03-storage.js
+- createPlaylist now adds the new playlist to currentOpenFolderId when a folder is open, instead of the root panel
+
+06b-modals.js
+- confirmCreatePlaylist refreshes folder contents when inside a folder
+- confirmCreateFolder no longer double-renders root views when inside a folder, and only calls addToFolder once
+
+2026-09-15
+19-online-lyrics.js
+- Added fromHeader flag to onlineLyricsState, set when the view opens without a playing song
+- Added searched flag, set once a search has been submitted
+- Removed Back to Lyrics button when opened from the header
+- Neutral prompt shown before the first search instead of No results found
+- Split album into its own cell in each result header
+
+styles.css
+- Widened the result grid to fit the album column
+- Added .online-lyrics-result-album styling and right-aligned the duration
+- Responsive override hides the album column below 900px
+
+2026-09-15
+19-online-lyrics.js
+- Removed the duplicate inner LRC / Lyrics tab row from the expanded preview; the badges row above the card now handles switching
+
+styles.css
+- Styled the online lyrics preview scrollbar to match the app's custom thumb
+- Removed the unused preview tab styles
+
+2026-09-15
+19-online-lyrics.js
+- Swapped the artist and album cells in each result row so the order is now title, artist, album
+- Swapped the search panel input order to title, artist, album so the placeholders line up with the result row
+
+styles.css
+- Swapped the album and artist grid column widths to match the new result row order
+
+2026-09-15
+19-online-lyrics.js
+- Renamed selectOnlineLyricsResult to openOnlineLyricsResult and added closeOnlineLyricsResult
+- Collapsed result cards now open on any click inside the card
+- Expanded result cards can only be collapsed by clicking the chevron
+- Use LRC and Use Lyrics buttons are hidden when the view was opened from the header
+- Album placeholder no longer says optional
+
+styles.css
+- Collapsed result cards show a pointer cursor; expanded cards do not

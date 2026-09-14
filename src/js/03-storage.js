@@ -7,13 +7,22 @@ const MAX_HISTORY_ENTRIES = 500;
 
 const MAX_SEARCH_HISTORY = 20;
 
+function getStoredJson(key, fallback) {
+    try {
+        const saved = localStorage.getItem(key);
+        return saved ? JSON.parse(saved) : fallback;
+    } catch (e) {
+        return fallback;
+    }
+}
+
 // ==============================================================================
 // RECENTLY PLAYED
 // ==============================================================================
 function saveToRecentlyPlayed(song) {
     const actualSong = song.song || song;
 
-    let recentSongs = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+    let recentSongs = getStoredJson('recentlyPlayed', []);
 
     recentSongs.unshift({
         id: actualSong.id,
@@ -40,7 +49,7 @@ function saveToRecentlyPlayed(song) {
 }
 
 function getRecentlyPlayed() {
-    const recentSongs = JSON.parse(localStorage.getItem('recentlyPlayed') || '[]');
+    const recentSongs = getStoredJson('recentlyPlayed', []);
     return recentSongs;
 }
 
@@ -85,7 +94,7 @@ async function clearRecentlyPlayed() {
 function saveToPlayHistory(song, playDuration) {
     const actualSong = song.song || song;
 
-    let history = JSON.parse(localStorage.getItem('playHistory') || '[]');
+    let history = getStoredJson('playHistory', []);
 
     const ghostSlotId = addHistoryGhostSlot(actualSong.id);
 
@@ -117,7 +126,7 @@ function saveToPlayHistory(song, playDuration) {
 }
 
 function getPlayHistory() {
-    return JSON.parse(localStorage.getItem('playHistory') || '[]');
+    return getStoredJson('playHistory', []);
 }
 
 async function clearPlayHistory() {
@@ -152,7 +161,7 @@ async function clearPlayHistory() {
 // FAVORITES
 // ==============================================================================
 function getFavorites() {
-    return JSON.parse(localStorage.getItem('favorites') || '[]');
+    return getStoredJson('favorites', []);
 }
 
 function saveFavorite(songId) {
@@ -178,7 +187,7 @@ function isFavorite(songId) {
 // PINNED ITEMS & ITEM ORDER
 // ==============================================================================
 function getPinnedItems() {
-    return JSON.parse(localStorage.getItem('pinnedItems') || '[]');
+    return getStoredJson('pinnedItems', []);
 }
 
 function savePinnedItems(pinnedIds) {
@@ -220,7 +229,7 @@ function togglePinItem(itemId, itemName) {
 }
 
 function getPlayedItemOrder() {
-    return JSON.parse(localStorage.getItem('playedItemOrder') || '[]');
+    return getStoredJson('playedItemOrder', []);
 }
 
 function savePlayedItemOrder(order) {
@@ -326,7 +335,7 @@ function refreshLeftPanelAfterFolderPinChange(folderId) {
 // PLAYLISTS
 // ==============================================================================
 function getPlaylists() {
-    return JSON.parse(localStorage.getItem('playlists') || '[]');
+    return getStoredJson('playlists', []);
 }
 
 function updatePlaylistCount(playlistId, count) {
@@ -354,10 +363,14 @@ function createPlaylist(name) {
     playlists.unshift(newPlaylist);
     savePlaylists(playlists);
 
-    let order = getPlayedItemOrder();
-    order = order.filter((id) => id !== `playlist-${newPlaylist.id}`);
-    order.unshift(`playlist-${newPlaylist.id}`);
-    savePlayedItemOrder(order);
+    if (currentOpenFolderId) {
+        addToFolder(currentOpenFolderId, newPlaylist.id, 'playlist', false);
+    } else {
+        let order = getPlayedItemOrder();
+        order = order.filter((id) => id !== `playlist-${newPlaylist.id}`);
+        order.unshift(`playlist-${newPlaylist.id}`);
+        savePlayedItemOrder(order);
+    }
 
     renderPlaylistsView();
     renderLeftPanelMainList();
@@ -521,7 +534,7 @@ function addSongToPlaylist(songId, playlistId) {
 // FOLDERS
 // ==============================================================================
 function getFolders() {
-    return JSON.parse(localStorage.getItem('folders') || '[]');
+    return getStoredJson('folders', []);
 }
 
 function saveFolders(folders) {
@@ -778,7 +791,7 @@ function getItemFolderState(folderId, itemId, itemType) {
 }
 
 function getExpandedFolderKeys() {
-    return JSON.parse(localStorage.getItem('expandedFolders') || '[]');
+    return getStoredJson('expandedFolders', []);
 }
 
 function saveExpandedFolderKeys(keys) {
@@ -928,11 +941,11 @@ function flattenLeftPanelItems(items, depth, parentKey, out, visited) {
 // SEARCH HISTORY
 // ==============================================================================
 function getSearchHistory() {
-    return JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    return getStoredJson('searchHistory', []);
 }
 
 function saveSearchToHistory(searchQuery, searchSessionId, resultCount) {
-    let searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    let searchHistory = getStoredJson('searchHistory', []);
 
     const searchEntry = {
         sessionId: searchSessionId,
@@ -1272,7 +1285,7 @@ function changeMusicFolder() {
 }
 
 function deleteSearchHistoryEntry(sessionId) {
-    let searchHistory = JSON.parse(localStorage.getItem('searchHistory') || '[]');
+    let searchHistory = getStoredJson('searchHistory', []);
     searchHistory = searchHistory.filter((entry) => entry.sessionId !== sessionId);
     localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
 

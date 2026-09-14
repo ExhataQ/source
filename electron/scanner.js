@@ -95,24 +95,9 @@ function runScan(args, options = {}) {
             if (code === 0 && options.jsonType) {
                 try {
                     if (options.jsonType === 'array') {
-                        let cleanResult = resultData;
-                        cleanResult = cleanResult.replace(/[\r\n].*?\|[█░]*\|[^\n]*/g, '');
-                        cleanResult = cleanResult.replace(/[\r\n]+\s*$/g, '').trim();
-                        const jsonStart = cleanResult.indexOf('[');
-                        const jsonEnd = cleanResult.lastIndexOf(']') + 1;
-                        const jsonOnly =
-                            jsonStart >= 0 && jsonEnd > jsonStart
-                                ? cleanResult.substring(jsonStart, jsonEnd)
-                                : cleanResult;
-                        parsed = JSON.parse(jsonOnly);
+                        parsed = extractJsonArray(resultData);
                     } else if (options.jsonType === 'object') {
-                        let jsonStr = resultData.trim();
-                        const jsonStart = jsonStr.indexOf('{');
-                        const jsonEnd = jsonStr.lastIndexOf('}');
-                        if (jsonStart !== -1 && jsonEnd !== -1) {
-                            jsonStr = jsonStr.substring(jsonStart, jsonEnd + 1);
-                        }
-                        parsed = JSON.parse(jsonStr);
+                        parsed = extractJsonObject(resultData);
                     }
                 } catch (err) {
                     parseError = err;
@@ -151,6 +136,59 @@ function updatePlayerSongs(outputDir, songs) {
     return true;
 }
 
+function extractJsonArray(rawOutput) {
+    let cleanResult = rawOutput;
+    cleanResult = cleanResult.replace(/[\r\n].*?\|[█░]*\|[^\n]*/g, '');
+    cleanResult = cleanResult.replace(/[\r\n]+\s*$/g, '').trim();
+    const jsonStart = cleanResult.indexOf('[');
+    const jsonEnd = cleanResult.lastIndexOf(']') + 1;
+    const jsonOnly =
+        jsonStart >= 0 && jsonEnd > jsonStart
+            ? cleanResult.substring(jsonStart, jsonEnd)
+            : cleanResult;
+    return JSON.parse(jsonOnly);
+}
+
+function extractJsonObject(rawOutput) {
+    let jsonStr = rawOutput.trim();
+    const jsonStart = jsonStr.indexOf('{');
+    const jsonEnd = jsonStr.lastIndexOf('}');
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+        jsonStr = jsonStr.substring(jsonStart, jsonEnd + 1);
+    }
+    return JSON.parse(jsonStr);
+}
+
+function mergeSongs(existingSongs, newSongs, prepend = false) {
+    if (!Array.isArray(newSongs) || newSongs.length === 0) return null;
+    if (!Array.isArray(existingSongs)) return null;
+
+    const existingUrls = new Set(existingSongs.map((song) => song.url));
+    const uniqueNewSongs = newSongs
+        .filter((song) => !existingUrls.has(song.url))
+        .map((song, index) => ({
+            ...song,
+            id: existingSongs.length + index
+        }));
+
+    const merged = prepend
+        ? [...uniqueNewSongs, ...existingSongs]
+        : [...existingSongs, ...uniqueNewSongs];
+
+    return {
+        songs: merged,
+        newSongs: uniqueNewSongs
+    };
+}
+
+function mergeAppend(existingSongs, newSongs) {
+    return mergeSongs(existingSongs, newSongs, false);
+}
+
+function mergePrepend(existingSongs, newSongs) {
+    return mergeSongs(existingSongs, newSongs, true);
+}
+
 function mergeNewSongs(outputDir, newSongs, prepend) {
     if (!newSongs || newSongs.length === 0) return null;
 
@@ -162,20 +200,13 @@ function mergeNewSongs(outputDir, newSongs, prepend) {
     if (!existingMatch) return null;
 
     const existingSongs = JSON.parse(existingMatch[1]);
-    const existingUrls = new Set(existingSongs.map((s) => s.url));
-    const uniqueNewSongs = newSongs.filter((s) => !existingUrls.has(s.url));
+    const merged = prepend
+        ? mergePrepend(existingSongs, newSongs)
+        : mergeAppend(existingSongs, newSongs);
+    if (!merged) return null;
 
-    uniqueNewSongs.forEach((s, i) => {
-        s.id = existingSongs.length + i;
-    });
-
-    const merged = prepend ? [...uniqueNewSongs, ...existingSongs] : [...existingSongs, ...uniqueNewSongs];
-    updatePlayerSongs(outputDir, merged);
-
-    return {
-        songs: merged,
-        newSongs: uniqueNewSongs
-    };
+    updatePlayerSongs(outputDir, merged.songs);
+    return merged;
 }
 
 async function scanDroppedFiles(filePaths, outputDir) {
@@ -317,6 +348,10 @@ async function scanFolder(folderPath, outputDir, options = {}) {
 }
 
 module.exports = {
+    extractJsonArray,
+    extractJsonObject,
+    mergeAppend,
+    mergePrepend,
     scanDroppedFiles,
     scanDownloadedFile,
     rebuildFromFolders,

@@ -106,27 +106,32 @@ Files that do NOT need dual updates:
 - src/js/01-sizes.js - Layout calculations and panel resize
 - src/js/02-ghost-list.js - Ghost list / slot tracking system
 - src/js/03-storage.js - localStorage CRUD
-- src/js/04-ui-systems.js - Hero section rendering, song item HTML, hover highlight, selection system, playlist/folder/album/artist/favorites/history renderers, lyrics view rendering
-- src/js/05-lazy-load.js - Virtual scrolling
-- src/js/06-ui-render.js - Context menus, external scrollbar, tooltips, drag & drop, modal dialogs, image viewer, theme switcher, notifications, keyboard shortcuts, marquee
-- src/js/07-views.js - View helpers, configs, handlers, providers, navigation history, switchView
+- src/js/04a-ui-render-core.js - Hero section rendering, song item HTML, list rendering, hover/selection behavior, and core left-panel rendering
+- src/js/04b-ui-render-views.js - Playlist/folder/album/artist/favorites/history/search/lyrics view rendering, including the Find lyrics / LRC online entry button
+- src/js/05-lazy-load.js - Virtual scrolling for the main and left-panel lists
+- src/js/06a-context-menus.js - Context-menu system, folder submenu behavior, pin/folder/playlist actions, and dismissal
+- src/js/06b-modals.js - Modal dialogs, including the first-run welcome folder-selection flow
+- src/js/06c-ui-widgets.js - Shared UI widgets and widget-level interaction helpers
+- src/js/07-views.js - View helpers, configs, handlers, providers, navigation history, switchView, and the online-lyrics view registration
 - src/js/08-panels.js - Right panel toggle/collapse, album art, settings panel, extended metadata, saved lyrics, search panel
 - src/js/09-folders-playlists.js - Playlist and folder navigation
 - src/js/10-playback.js - Playback, shuffle, queue, play current view
 - src/js/11-lrc.js - LRC parsing, synced lyrics, sync editor
 - src/js/12-color-extract.js - Dominant color extraction
-- electron/main.js - Electron main-process orchestration and IPC handlers (copied to App)
+- electron/main.js - Electron main-process orchestration and IPC registration (copied to App)
 - electron/window-manager.js - Main window creation, window-state persistence, and access to the main window reference (copied to App)
 - electron/loading-window.js - Loading window creation, progress updates, and cleanup (copied to App)
-- electron/scanner.js - Shared scanner process orchestration, progress handling, JSON parsing, and scan-result merging (copied to App)
-- electron/music-folders.js - Music-folder configuration reading/writing, validation, folder statistics, and rebuild song-count metadata (copied to App)
+- electron/scanner.js - Shared scanner process orchestration and progress handling plus pure JSON extraction and append/prepend merge helpers (copied to App)
+- electron/music-folders.js - Music-folder configuration reading/writing plus pure duplicate/removal/song-count helpers (copied to App)
 - electron/downloads.js - Download-folder configuration, download target selection, remote file downloading, filename collision handling, and download-folder reset (copied to App)
 - electron/file-operations.js - Lyrics file open/save operations using the main window reference from window-manager.js (copied to App)
+- electron/online-lyrics.js - LRCLIB search and lyrics-file download client (copied to App)
+- electron/online-lyrics.js - LRCLIB API client for exact/fallback lyrics search and saving plain/LRC results to the configured download folder (copied to App)
 - electron/preload.js - Electron preload script (copied to App)
 - electron/package.json - Electron config (copied to App)
 - electron/scan-folder.js - Runtime audio scanner (copied to App)
 
-Electron main-process structure: main.js owns IPC registration and application bootstrap, including the first-run welcome-select-folder flow; window-manager.js owns the main window and window-state persistence; loading-window.js owns the scan/loading progress window; scanner.js owns shared scan-process execution, progress handling, result parsing, and scan-result merging while preserving the behavior of each scan entry point; music-folders.js owns music-folder configuration and folder metadata operations while main.js retains scan and loading-window orchestration; downloads.js owns download-folder configuration and remote file downloading while main.js retains IPC and delegates the downloaded file to scanner.js for scanning and merging; file-operations.js owns lyrics file dialog and filesystem operations and gets the main window from window-manager.js.
+Electron main-process structure: main.js owns IPC registration and application bootstrap, including the first-run welcome-select-folder flow and online-lyrics IPC; window-manager.js owns the main window and window-state persistence; loading-window.js owns the scan/loading progress window; scanner.js owns shared scan-process execution, progress handling, result parsing, and scan-result merging while preserving the behavior of each scan entry point; music-folders.js owns music-folder configuration and folder metadata operations while main.js retains scan and loading-window orchestration; downloads.js owns download-folder configuration and remote file downloading while main.js retains IPC and delegates the downloaded file to scanner.js for scanning and merging; file-operations.js owns lyrics file dialog and filesystem operations and gets the main window from window-manager.js.
 
 Note: fonts are self-healing. Source fonts live in Source/tools/fonts/ and are copied to App/MusicPlayerOutput/fonts/ on every build. If any font file is missing from both, music_player.py downloads them from CDN. all.min.css paths are rewritten from url(../webfonts/...) to url(...) after download.
 
@@ -134,7 +139,7 @@ Source/build/ contains:
 
 music_player.py — Python build script (paths, deployed-data extraction, font self-heal, HTML/JS generation — replaces {{SONGS_COUNT}} and {{PLACEHOLDER_IMAGE}} in music_player.html, copies all Electron runtime files, Electron launch).
 
-music_player.html — HTML template with {{SONGS_COUNT}} and {{PLACEHOLDER_IMAGE}} placeholders. Left panel header includes a collapsed-folder-back-btn (id="collapsed-folder-back-btn", shown via .visible when the panel is collapsed and a folder is open). #player-cover and #album-art-image use src="{{PLACEHOLDER_IMAGE}}" and inline onerror handlers with the data URI baked in. Loads scripts in order: js/00-state.js, js/01-sizes.js, js/02-ghost-list.js, js/03-storage.js, js/04-ui-systems.js, js/05-lazy-load.js, js/06-ui-render.js, js/07-views.js, js/08-panels.js, js/09-folders-playlists.js, js/10-playback.js, js/11-lrc.js, js/12-color-extract.js, then player.js (generated, at root) last.
+music_player.html — HTML template with {{SONGS_COUNT}} and {{PLACEHOLDER_IMAGE}} placeholders. Left panel header includes a collapsed-folder-back-btn (id="collapsed-folder-back-btn", shown via .visible when the panel is collapsed and a folder is open). Header right side includes the "Play from URL" button and the "Lyrics / LRC Search" button that calls openOnlineLyricsSearchView(). #player-cover and #album-art-image use src="{{PLACEHOLDER_IMAGE}}" and inline onerror handlers with the data URI baked in. Loads the current split renderer scripts in order: js/00-state.js, js/01-sizes.js, js/02-ghost-list.js, js/03-storage.js, js/04a-ui-render-core.js, js/04b-ui-render-views.js, js/05-lazy-load.js, js/06a-context-menus.js, js/06b-modals.js, js/06c-ui-widgets.js, js/07-views.js, js/08-panels.js, js/09-folders-playlists.js, js/10-playback.js, js/11-lrc.js, js/12-color-extract.js, js/13-song-highlight.js, js/14-song-navigation.js, js/15-playback-controls.js, js/16-context-menu-actions.js, js/17-song-selection.js, js/18-lyrics-editor.js, js/19-online-lyrics.js, then player.js (generated, at root) last.
 
 icon.png — app icon, copied to App/icon.png.
 
@@ -150,7 +155,7 @@ Source/src/js/ contains (loaded in numeric order):
 
 02-ghost-list.js — ghostLists, currentSearchSessionId, nextSearchItemSlotId, activeSlotHighlights, historyGhostSlots, initHistoryGhostSlots, addHistoryGhostSlot, removeHistoryGhostSlot, getHistoryGhostSlotId, rebuildGhostListFromMain, getGhostSlotId, clearGhostList, initGhostSlots.
 
-03-storage.js — localStorage CRUD: constants, recently played, play history, favorites, pinned items (global, key pinnedItems), folder-scoped pinned items (key folderPinnedItems: per-folder array of pin ids; getFolderPinnedItems, isItemPinnedInFolder, togglePinItemInFolder — used by buildFolderChildItems so pinning inside a folder is independent of the root panel; togglePinItemInFolder calls refreshLeftPanelAfterFolderPinChange which re-renders the folder view when open, or the root left panel when the folder is only expanded inline), played item order (movePlayedItemToTop skips re-render when the item is pinned or already at index 0), playlists, folders, search history, library locations, albums, artists, import/export.
+03-storage.js — localStorage CRUD: getStoredJson() provides guarded JSON parsing with typed fallbacks for stored arrays; constants, recently played, play history, favorites, pinned items (global, key pinnedItems), folder-scoped pinned items (key folderPinnedItems: per-folder array of pin ids; getFolderPinnedItems, isItemPinnedInFolder, togglePinItemInFolder — used by buildFolderChildItems so pinning inside a folder is independent of the root panel; togglePinItemInFolder calls refreshLeftPanelAfterFolderPinChange which re-renders the folder view when open, or the root left panel when the folder is only expanded inline), played item order (movePlayedItemToTop skips re-render when the item is pinned or already at index 0), playlists, folders, search history, library locations, albums, artists, import/export.
 
 04a-ui-render-core.js — Hero section rendering (updateHeroSongCount, updateHeroSection, showHeroClearButton, showHeroSection, setupHeroSection, showTracklistHeader, updateHeroCover, collectAllLeftPanelItems), song items (createSongItemHTML, buildSongArtistHTML, buildSongAlbumHTML, buildSongItemHTML — song-cover onerror clears itself before falling back to PLACEHOLDER_IMAGE, renderRightPanelItem), song lists (renderSongsList), hover highlight system (hoverLayer, activeHighlightEl, selectionHighlightLayer, hoveredSongIndex, activeSongSlot, hoveredRowEl, createHighlightDiv, getItemPosition, initHoverLayer, handleHoverMouseMove, updateHoverHighlight, handleHoverMouseLeave, hideHoverHighlight, updateHoverHighlightAfterScroll), selection system (selectedSongId, selectedSongIds, lastSelectedIndex, selectionHighlights, selectSongItem, clearAllSelections, reapplySelectionAfterFilter, getSongIndexById, updateSelectionHighlight, updateActiveHighlight, Ctrl+A and Escape keydown handlers), left panel render (renderLeftPanelMainList).
 
@@ -164,7 +169,7 @@ Source/src/js/ contains (loaded in numeric order):
 
 06c-ui-widgets.js — UI widgets: external scrollbar (updateScrollbarById, initExternalScrollbar, lastMouseX, lastMouseY, beforeunload cleanup); global tooltip system (temporarilySuppressTooltip, createTooltipElement, positionTooltip, mouseover listener, click listener, DOMContentLoaded tooltip titles); drag & drop (initSongDragToLeftPanel — mouseup's isOverLeftPanel check uses the panel container so drops on empty panel space add to Liked Songs; non-droppable left-panel items (.drag-invalid) are treated as empty panel space for both the hover border and the drop behavior; initLeftPanelDragAndDrop — folder-aware via getFolderIdForElement (reads currentOpenFolderId or data-parent-folder) captured as dragFolderId on mousedown, with getActivePinListForFolder/saveActivePinListForFolder switching between global pinnedItems and folder-scoped folderPinnedItems, so drag-reordering of pinned items inside folders works both when the folder is open and when its contents are shown expanded in the root; inside a folder only pinned items are valid drop targets); fullscreen image viewer (openImageViewer, initZoomLens, deactivateZoomLens, closeImageViewer, imageViewerKeyHandler, zoomLens, lensActive, viewerMouseX, viewerMouseY); theme switcher (initThemeButtons, themeClickHandler); notification system (showNotification, toggleNotificationPanel, closeNotificationPanel, clearAllNotifications, removeNotificationItem, updateNotificationBadge, renderNotificationPanel, notificationPanelOpen, notificationHistory); keyboard shortcuts and mouse-button navigation; marquee (initMarqueeOnHover).
 
-07-views.js — View helpers (getCurrentViewLabel, formatArtistNames, buildPlayerArtistHTML, resetViewScroll, resetLeftPanelActiveState, activateLeftPanelItem, refreshUIAfterViewSwitch, refreshSongCovers, finalizeViewSwitch, refreshCurrentView, updateAllCounts, getCurrentViewDisplayName), subhero controls, isViewCurrentlyPlaying, viewConfigs, viewHandlers, listProviders, getSongsForPrefixedList, getSongsForList, getSongCountForList, navigation history (pushToHistoryStack, pushViewToHistory, canGoBack, canGoForward, goBack, goForward, updateNavigationButtons), detail view openers (openDetailView, openAlbum, openArtist), switchToLyrics, switchView, settings/history navigation helpers (switchToHistoryFromSettings, switchToSearchHistoryFromSettings, handleHeroClear, openSearchHistoryChild).
+07-views.js — View helpers (getCurrentViewLabel, formatArtistNames, buildPlayerArtistHTML, resetViewScroll, resetLeftPanelActiveState, activateLeftPanelItem, refreshUIAfterViewSwitch, refreshSongCovers, finalizeViewSwitch, refreshCurrentView, updateAllCounts, getCurrentViewDisplayName), subhero controls (setSubheroVisibility treats lyrics and online-lyrics the same), isViewCurrentlyPlaying, viewConfigs (includes an online-lyrics entry that renders via renderOnlineLyricsView), viewHandlers (includes an online-lyrics enter that calls renderOnlineLyricsView), listProviders, getSongsForPrefixedList, getSongsForList, getSongCountForList, navigation history (pushToHistoryStack, pushViewToHistory, canGoBack, canGoForward, goBack, goForward, updateNavigationButtons), detail view openers (openDetailView, openAlbum, openArtist), switchToLyrics, switchView (treats online-lyrics like lyrics when tearing down or hiding the lyrics root), settings/history navigation helpers (switchToHistoryFromSettings, switchToSearchHistoryFromSettings, handleHeroClear, openSearchHistoryChild).
 
 08-panels.js — Right panel toggle/collapse, album art (updateAlbumArt — largeCover picks the first non-empty trimmed string among largeCover/cover/PLACEHOLDER_IMAGE), right panel tabs, settings panel (openSettingsPanel, openAdvancedSettings, closeAdvancedSettings, renderAdvancedSettingsPanel, handleThresholdInput, updateThresholdSliderFill, enterSettingsFromHistory, enterAdvancedSettingsFromHistory, closeSettingsPanelOnly, closeSettingsPanel, toggleSettingsPanel, refreshUrlSaveFolderDisplay, changeUrlSaveFolder, resetUrlSaveFolder), extended metadata settings, saved lyrics management, search panel (resetSearchState, resetSubheroSearch, performSearch) plus subhero and left-panel search inputs (focusSubheroSearch, clearSubheroSearch, handleSubheroSearchBlur, performSubheroSearch, focusLeftPanelSearch, clearLeftPanelSearch, handleLeftPanelSearchBlur, performLeftPanelSearch).
 
@@ -188,20 +193,21 @@ Source/src/js/ contains (loaded in numeric order):
 
 18-lyrics-editor.js — Lyrics storage and editor: custom lyrics store (getCustomLyricsStore, saveCustomLyricsStore, getLyricsForSong, setLyricsForSong); synced lyrics variant system (getSyncedLyricsStore, saveSyncedLyricsStore, _migrateEntry, getSyncedLyricsVariantsForSong, getActiveSyncedLyricsForSong, getSyncedLyricsForSong, _getOrCreateEntry, addSyncedLyricsVariant, setSyncedLyricsForSong, setActiveSyncedLyricsVariant, renameSyncedLyricsVariant, deleteSyncedLyricsVariant, clearSyncedLyricsForSong); lyrics editor modal (openLyricsEditor, openLyricsEditorForSong, saveLyricsForSong, clearLyricsForSong, closeLyricsEditor, lyricsEditorKeyHandler, saveLyricsFromEditor, clearLyricsForCurrentSong); variant UI (selectSyncedVariant, renameSyncedVariant, deleteSyncedVariant).
 
+19-online-lyrics.js — Online lyrics search and download via LRCLIB. Renderer-side view (currentView = 'online-lyrics'), search state (onlineLyricsState with fromHeader flag set when opened without a playing song and searched flag set once a search has been submitted), searchOnlineLyrics, selectOnlineLyricsResult, selectOnlineLyricsType, copyOnlineLyrics, downloadOnlineLyrics, useOnlineLyrics (writes to synced or plain lyrics for the current song), pagination helpers, renderOnlineLyricsResult (album shown in its own cell, duration right-aligned), renderOnlineLyricsView (Back to Lyrics button hidden when fromHeader is true; pre-search prompt shown until searched becomes true), openOnlineLyricsView, openOnlineLyricsSearchView.
+
 99-player.js — Template with {{SONGS_DATA}} and {{PLACEHOLDER_IMAGE}}. Now reduced to the bootstrap and shared helpers: SONGS_DATA init, deletedSongIds Set, getActiveSongs, markSongAsDeleted, filterDeletedSongs, getActiveFavoritesCount, PLACEHOLDER_IMAGE (also aliased to window.PLACEHOLDER_IMAGE so inline HTML onerror/onload handlers can resolve it), escapeHtml, generateLongId, generateConsistentId, saveCurrentPlaybackState, left panel filter toggles (togglePlaylistsFilter, toggleAlbumsFilter, toggleArtistsFilter, deactivateAllFilterTags), shouldSaveToRecentlyPlayed, isBelowCollapseThreshold, left panel collapse (collapseLeftPanel, expandLeftPanel, toggleLeftPanelCollapse), importDroppedFiles, resize handler for collapse threshold, initPanelResize, initTracklistScrollEffect, DOMContentLoaded bootstrap, closeApp, minimizeApp, maximizeApp, updateMaximizeIcon, and player title/artist/cover/album-art bindings.
 
 Source/electron/ contains:
 
 main.js — Electron main-process orchestration and IPC registration.
 preload.js — contextBridge electronAPI.
-package.json — Minimal Electron config.
+package.json — Minimal Electron config plus the built-in Node test script (`npm test` runs `node --test ../tools/tests/*.test.js`).
 scan-folder.js — Node.js music-metadata scanner (see AUDIO FILE PROCESSING ARCHITECTURE above).
 window-manager.js — Main BrowserWindow creation and window-state persistence.
 loading-window.js — Loading window creation, progress updates, and cleanup.
-scanner.js — Shared scan-process execution, progress parsing, JSON extraction, and player.js merging.
-music-folders.js — Music-folder configuration reading/writing, duplicate validation, folder statistics, and rebuild song-count metadata.
-
-Source/tools/ contains dev utilities and asset sources:
+scanner.js — Shared scan-process execution and progress handling; pure JSON extraction and append/prepend merge functions are separated from filesystem/fork orchestration so they can be unit-tested without Electron. Downloaded scans prepend and dropped-file scans append, preserving their existing behavior.
+music-folders.js — Music-folder configuration reading/writing plus pure folder validation/removal/song-count helpers. Path comparison uses Windows normalization; song counts require the song path to be inside the folder rather than merely sharing a string prefix.
+Source/tools/ contains dev utilities, tests, and asset sources:
 - change.log — append-only log of file changes (date, file name, and bullet list of what changed)
 - rebuild.bat — kills electron.exe, relaunches App/electron.exe
 - clean_for_share.py — sanitizes App for sharing (reads templates from src/js/99-player.js and build/music_player.html)
@@ -210,6 +216,7 @@ Source/tools/ contains dev utilities and asset sources:
 - test-placeholders.html — placeholder testing page
 - fonts/ — source fonts (all.min.css, material-icons.css, 4 woff2 files)
 - icons/ — source icons (prev.png, play.png, pause.png, next.png, play.svg, pause.svg)
+- tests/ — permanent zero-dependency Node unit tests run with `npm test`: scanner.test.js, music-folders.test.js, and storage.test.js.
 
 INSTRUCTIONS FOR AI:
 
@@ -228,3 +235,10 @@ If you want me to add a new line tell me where to add it (after or before what l
 IMPORTANT: When you modify any file in Source/electron/, Source/build/, Source/src/, or Source/tools/, please update this prompt's description of that file so I always have an accurate reference of what each file does.
 
 if it's okay then tell me to send you codes
+
+Online lyrics result behavior:
+- LRCLIB online search uses the exact /api/get result as the first result when available, then includes other /api/search matches after it, de-duplicated by LRCLIB id or matching track/artist/duration. Temporary HTTP/network failures are retried with short backoff delays; exact-match failure does not block the broader search. If artist/title/album fields are incomplete, the search uses LRCLIB's broad q query so a single populated field can still return results.
+- The Online Lyrics view displays 10 results per page with Previous/Next navigation. LRCLIB currently returns a maximum of 20 search results and does not support server-side pagination, so the renderer paginates the returned result set locally.
+- Pagination resets to page 1 whenever a new online lyrics search starts, and changing pages clears the expanded result selection.
+
+Online lyrics: The global header can open the online lyrics view before the regular Lyrics view has been visited, so the online lyrics renderer initializes its own lyrics-view-root when needed.

@@ -1148,6 +1148,10 @@ function renderLyricsView() {
                     <span class="material-symbols-outlined">content_paste</span>
                     <span>Paste LRC</span>
                 </button>
+                <button class="lyrics-view-edit-btn lyrics-online-btn" onclick="openOnlineLyricsView()" aria-label="Find lyrics or LRC online">
+                    <span class="material-symbols-outlined">language</span>
+                    <span>Find lyrics / LRC online</span>
+                </button>
             </div>
             ${(() => {
                 const entry =

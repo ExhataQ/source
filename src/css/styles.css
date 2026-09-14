@@ -6494,3 +6494,328 @@ body.dragging-scrollbar .left-panel-main-item *:hover {
 .synced-variant-icon-btn .material-symbols-outlined {
     font-size: 15px;
 }
+
+/* Online lyrics search */
+.online-lyrics-view-container {
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 80px 120px;
+    box-sizing: border-box;
+}
+
+.online-lyrics-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 24px;
+    margin-bottom: 28px;
+}
+
+.online-lyrics-kicker {
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: var(--font-weight-semibold);
+    letter-spacing: 1px;
+    margin-bottom: 6px;
+}
+
+.online-lyrics-header h2 {
+    margin: 0 0 6px;
+    color: #fff;
+    font-size: 28px;
+}
+
+.online-lyrics-header p {
+    margin: 0;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.online-lyrics-search-panel {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px;
+    padding: 16px;
+    margin-bottom: 28px;
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+}
+
+.online-lyrics-search-panel input {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 9px 11px;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 6px;
+    outline: none;
+    background: rgba(0, 0, 0, 0.25);
+    color: #fff;
+    font: inherit;
+    font-size: 13px;
+}
+
+.online-lyrics-search-panel input:focus {
+    border-color: var(--accent);
+}
+
+.online-lyrics-search-btn {
+    align-self: end;
+    min-height: 36px;
+}
+
+.online-lyrics-result-heading {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+    color: #fff;
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+}
+
+.online-lyrics-result-heading small {
+    color: var(--text-secondary);
+    font-size: 11px;
+    font-weight: normal;
+}
+
+.online-lyrics-results {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.online-lyrics-result {
+    overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.025);
+    cursor: pointer;
+}
+
+.online-lyrics-result.selected {
+    cursor: default;
+}
+
+.online-lyrics-result.selected {
+    border-color: rgba(var(--accent-rgb), 0.5);
+}
+
+.online-lyrics-result-header {
+    display: grid;
+    grid-template-columns: minmax(160px, 1fr) minmax(140px, 0.8fr) minmax(140px, 0.9fr) 60px 24px;
+    gap: 12px;
+    align-items: center;
+    width: 100%;
+    padding: 14px 16px 8px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.online-lyrics-result-title {
+    color: #fff;
+    font-size: 14px;
+    font-weight: var(--font-weight-semibold);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.online-lyrics-result-artist,
+.online-lyrics-result-album,
+.online-lyrics-result-meta {
+    color: var(--text-secondary);
+    font-size: 12px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.online-lyrics-result-album {
+    opacity: 0.75;
+}
+
+.online-lyrics-result-meta {
+    text-align: right;
+}
+
+.online-lyrics-expand {
+    color: var(--text-secondary);
+    font-size: 18px;
+}
+
+.online-lyrics-badges {
+    display: flex;
+    gap: 6px;
+    padding: 0 16px 14px;
+}
+
+.online-lyrics-badge {
+    padding: 3px 7px;
+    border: 0;
+    border-radius: 4px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--text-secondary);
+    font: inherit;
+    font-size: 10px;
+    cursor: pointer;
+}
+
+.online-lyrics-badge.active,
+.online-lyrics-badge:hover {
+    background: rgba(255, 255, 255, 0.14);
+    color: #fff;
+}
+
+.online-lyrics-badge.synced.active,
+.online-lyrics-badge.synced:hover {
+    color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.16);
+}
+
+.online-lyrics-badge.synced {
+    color: var(--accent);
+    background: rgba(var(--accent-rgb), 0.1);
+}
+
+.online-lyrics-badge.unavailable {
+    opacity: 0.65;
+}
+
+.online-lyrics-preview {
+    padding: 0 16px 16px;
+}
+
+.online-lyrics-preview pre {
+    max-height: 330px;
+    overflow: auto;
+    margin: 0 0 12px;
+    padding: 14px;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 6px;
+    background: rgba(0, 0, 0, 0.28);
+    color: var(--text-secondary);
+    font-family: inherit;
+    font-size: 12px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.online-lyrics-preview pre::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+.online-lyrics-preview pre::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.online-lyrics-preview pre::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 4px;
+}
+
+.online-lyrics-preview pre::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.35);
+}
+
+.online-lyrics-preview pre::-webkit-scrollbar-thumb:active {
+    background: rgba(255, 255, 255, 0.4);
+}
+
+.online-lyrics-preview pre::-webkit-scrollbar-corner {
+    background: transparent;
+}
+
+.online-lyrics-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.online-lyrics-primary-btn {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #000;
+}
+
+.online-lyrics-primary-btn:hover {
+    background: var(--accent-hover);
+    border-color: var(--accent-hover);
+}
+
+.online-lyrics-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 14px;
+    margin-top: 18px;
+    padding: 10px 0 4px;
+}
+
+.online-lyrics-pagination button:disabled {
+    opacity: 0.4;
+    cursor: default;
+}
+
+.online-lyrics-page-indicator {
+    min-width: 90px;
+    text-align: center;
+    font-size: 13px;
+    opacity: 0.75;
+}
+
+.online-lyrics-status {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    min-height: 150px;
+    color: var(--text-secondary);
+    font-size: 13px;
+}
+
+.online-lyrics-status.error {
+    color: #ff7777;
+}
+
+.online-lyrics-spinner {
+    animation: onlineLyricsSpin 1s linear infinite;
+}
+
+@keyframes onlineLyricsSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@media (max-width: 900px) {
+    .online-lyrics-view-container {
+        padding-left: 30px;
+        padding-right: 30px;
+    }
+
+    .online-lyrics-search-panel {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .online-lyrics-search-btn {
+        align-self: stretch;
+    }
+
+    .online-lyrics-result-header {
+        grid-template-columns: 1fr 1fr 24px;
+    }
+
+    .online-lyrics-result-album,
+    .online-lyrics-result-meta {
+        display: none;
+    }
+}

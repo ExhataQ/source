@@ -30,6 +30,29 @@ function writeConfig(configPath, folders, folderMetadata) {
     );
 }
 
+function isDuplicateFolder(folders, newPath) {
+    return folders.some((folder) => folder.toLowerCase() === newPath.toLowerCase());
+}
+
+function removeFolder(folders, targetPath) {
+    const normalizedTarget = path.win32.normalize(targetPath);
+    return folders.filter((folder) => path.win32.normalize(folder) !== normalizedTarget);
+}
+
+function normalizeSongFilePath(url) {
+    return url.replace('file:///', '').replace(/\//g, '\\');
+}
+
+function computeFolderSongCount(folder, songs) {
+    const normalizedFolder = folder.replace(/\\\\/g, '\\').replace(/[\\/]$/, '').toLowerCase();
+    const folderPrefix = normalizedFolder + '\\';
+
+    return songs.filter((song) => {
+        const filePath = normalizeSongFilePath(song.url).toLowerCase();
+        return filePath.startsWith(folderPrefix);
+    }).length;
+}
+
 function getMusicFolders(configPath) {
     return readConfig(configPath).folders;
 }
@@ -40,7 +63,7 @@ function addMusicFolder(configPath, folderPath) {
     let folders = config.folders.map((f) => f.replace(/\\\\/g, '\\'));
     const folderMetadata = config.folderMetadata;
 
-    const isDuplicate = folders.some((f) => f.toLowerCase() === newFolder.toLowerCase());
+    const isDuplicate = isDuplicateFolder(folders, newFolder);
     if (isDuplicate) {
         return {
             success: false,
@@ -66,12 +89,8 @@ function removeMusicFolder(configPath, folderPath) {
     const config = readConfig(configPath);
     let folders = config.folders;
     const beforeCount = folders.length;
-    const normalizedTarget = path.normalize(folderPath);
 
-    folders = folders.filter((f) => {
-        const normalizedFolder = path.normalize(f);
-        return normalizedFolder !== normalizedTarget;
-    });
+    folders = removeFolder(folders, folderPath);
 
     if (beforeCount !== folders.length) {
         fs.writeFileSync(
@@ -106,11 +125,7 @@ function updateFolderSongCounts(configPath, folders, songs) {
     const folderMetadata = config.folderMetadata;
 
     for (const folder of folders) {
-        const folderSongCount = songs.filter((song) => {
-            const filePath = song.url.replace('file:///', '').replace(/\//g, '\\');
-            const normalizedFolder = folder.replace(/\\\\/g, '\\');
-            return filePath.toLowerCase().startsWith(normalizedFolder.toLowerCase());
-        }).length;
+        const folderSongCount = computeFolderSongCount(folder, songs);
 
         if (folderMetadata[folder]) {
             folderMetadata[folder].songCount = folderSongCount;
@@ -126,6 +141,9 @@ function updateFolderSongCounts(configPath, folders, songs) {
 }
 
 module.exports = {
+    isDuplicateFolder,
+    removeFolder,
+    computeFolderSongCount,
     getMusicFolders,
     addMusicFolder,
     removeMusicFolder,

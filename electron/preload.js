@@ -23,6 +23,8 @@ contextBridge.exposeInMainWorld('electronAPI', {
     pickDownloadFolder: () => ipcRenderer.invoke('pick-download-folder'),
     resetDownloadFolder: () => ipcRenderer.invoke('reset-download-folder'),
     getDownloadFolder: () => ipcRenderer.invoke('get-download-folder'),
+    searchOnlineLyrics: (params) => ipcRenderer.invoke('search-online-lyrics', params),
+    downloadOnlineLyrics: (params) => ipcRenderer.invoke('download-online-lyrics', params),
     onThumbarPrev: (cb) => ipcRenderer.on('thumbar-prev', () => cb()),
     onThumbarPlayPause: (cb) => ipcRenderer.on('thumbar-playpause', () => cb()),
     onThumbarNext: (cb) => ipcRenderer.on('thumbar-next', () => cb()),
