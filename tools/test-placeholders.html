@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Placeholder Styles Test</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: #121212;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            padding: 20px;
+            color: #fff;
+        }
+        
+        .test-container {
+            display: flex;
+            gap: 40px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .panel {
+            flex: 1;
+            background: #1a1a1a;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .panel h2 {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #1db954;
+        }
+        
+        .panel h3 {
+            font-size: 14px;
+            margin: 20px 0 10px;
+            color: #b3b3b3;
+        }
+        
+        /* LEFT PANEL STYLES (copied from styles.css) */
+        .left-panel-main-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .left-panel-main-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 7px;
+            margin: 0;
+            border-radius: 6px;
+            cursor: pointer;
+            box-sizing: border-box;
+            min-height: 59px;
+            height: 59px;
+        }
+        
+        .left-panel-main-item:hover {
+            background: #2a2a2a;
+        }
+        
+        .main-item-cover-wrapper {
+            width: 45px;
+            height: 45px;
+            border-radius: 8px;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .main-item-cover-svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        
+        .main-item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            min-width: 0;
+            flex: 1;
+        }
+        
+        .main-item-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: #fff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .main-item-subtitle {
+            font-size: 12px;
+            color: #b3b3b3;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* LEFT PANEL SKELETON */
+        .left-panel-main-item.lazy-skeleton {
+            pointer-events: none;
+            opacity: 0.6;
+            min-height: 59px;
+            height: 59px;
+            max-height: 59px;
+            box-sizing: border-box;
+        }
+        
+        .left-panel-main-item.lazy-skeleton .main-item-cover-wrapper div {
+            width: 45px;
+            height: 45px;
+            background: #2a2a2a;
+            border-radius: 8px;
+        }
+        
+        .left-panel-main-item.lazy-skeleton .main-item-title,
+        .left-panel-main-item.lazy-skeleton .main-item-subtitle {
+            background: #2a2a2a;
+            color: transparent !important;
+            border-radius: 4px;
+        }
+        
+        .left-panel-main-item.lazy-skeleton .main-item-title {
+            width: 60%;
+            height: 14px;
+        }
+        
+        .left-panel-main-item.lazy-skeleton .main-item-subtitle {
+            width: 40%;
+            height: 12px;
+            margin-top: 0;
+        }
+        
+        /* MAIN SONG LIST STYLES (copied from styles.css) */
+        .song-list {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .song-item {
+            display: grid;
+            grid-template-columns: 40px 1fr 0.82fr auto;
+            align-items: center;
+            border-radius: 4px;
+            padding: 7px 0;
+            min-width: 0;
+            min-height: 52px;
+            height: 52px;
+        }
+        
+        .song-item:hover {
+            background: #2a2a2a;
+        }
+        
+        .song-number-item {
+            font-size: 12px;
+            color: #b3b3b3;
+            font-family: monospace;
+            text-align: right;
+            padding-right: 8px;
+        }
+        
+        .left-song-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            min-width: 0;
+            overflow: hidden;
+        }
+        
+        .song-cover {
+            width: 40px;
+            height: 40px;
+            border-radius: 6px;
+            object-fit: cover;
+            background: #2a2a2a;
+            flex-shrink: 0;
+        }
+        
+        .song-info {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            overflow-x: hidden;
+            width: 100%;
+        }
+        
+        .song-title {
+            font-weight: 600;
+            font-size: 12px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        
+        .song-artist {
+            font-size: 11px;
+            color: #b3b3b3;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            overflow: hidden;
+        }
+        
+        .song-album {
+            font-size: 11px;
+            color: #b3b3b3;
+            padding: 0 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .right-song-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding-right: 15px;
+            justify-content: flex-end;
+        }
+        
+        .song-duration {
+            color: #b3b3b3;
+            font-family: monospace;
+            font-size: 11px;
+            min-width: 44px;
+            text-align: right;
+        }
+        
+        /* MAIN SONG LIST SKELETON */
+        .song-item.lazy-skeleton {
+            pointer-events: none;
+        }
+        
+        .song-item.lazy-skeleton .song-cover {
+            width: 40px;
+            height: 40px;
+            background: #2a2a2a;
+            border-radius: 6px;
+            flex-shrink: 0;
+        }
+        
+        .song-item.lazy-skeleton .song-title,
+        .song-item.lazy-skeleton .song-artist {
+            display: inline-block;
+            background: #2a2a2a;
+            border-radius: 4px;
+            color: transparent !important;
+            height: 14px;
+        }
+        
+        .song-item.lazy-skeleton .song-title {
+            width: 60%;
+            margin-bottom: 4px;
+        }
+        
+        .song-item.lazy-skeleton .song-artist {
+            width: 40%;
+            height: 12px;
+        }
+        
+        .song-item.lazy-skeleton .song-album {
+            display: inline-block;
+            background: #2a2a2a;
+            border-radius: 4px;
+            color: transparent !important;
+            width: 70%;
+            height: 12px;
+        }
+        
+        .song-item.lazy-skeleton .song-duration {
+            display: inline-block;
+            background: #2a2a2a;
+            border-radius: 4px;
+            color: transparent !important;
+            width: 36px;
+            height: 12px;
+        }
+        
+        .song-item.lazy-skeleton .song-number-item {
+            display: inline-block;
+            background: #2a2a2a;
+            border-radius: 4px;
+            color: transparent !important;
+            width: 20px;
+            height: 12px;
+        }
+        
+        hr {
+            border-color: #333;
+            margin: 20px 0;
+        }
+        
+        .note {
+            font-size: 12px;
+            color: #b3b3b3;
+            margin-top: 20px;
+            padding: 10px;
+            background: #1a1a1a;
+            border-radius: 6px;
+        }
+        
+        .badge {
+            display: inline-block;
+            background: #1db954;
+            color: #000;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <!-- LEFT PANEL TEST -->
+        <div class="panel">
+            <h2>📁 Left Panel <span class="badge">Virtual Scroll</span></h2>
+            <h3>Real Items</h3>
+            <ul class="left-panel-main-list" id="left-panel-real">
+                <li class="left-panel-main-item">
+                    <div class="main-item-cover-wrapper">
+                        <svg class="main-item-cover-svg" viewBox="0 0 400 400" width="50" height="50">
+                            <rect width="400" height="400" rx="8" fill="#1db954"/>
+                            <circle cx="200" cy="200" r="70" fill="none" stroke="#000" stroke-width="12"/>
+                            <polygon points="180,160 180,240 240,200" fill="#000"/>
+                        </svg>
+                    </div>
+                    <div class="main-item-info">
+                        <span class="main-item-title">All Songs</span>
+                        <span class="main-item-subtitle"><span>Playlist</span><span class="main-item-dot">•</span><span>395 songs</span></span>
+                    </div>
+                </li>
+                <li class="left-panel-main-item">
+                    <div class="main-item-cover-wrapper">
+                        <div style="width:45px;height:45px;background:#2a2a2a;border-radius:8px;"></div>
+                    </div>
+                    <div class="main-item-info">
+                        <span class="main-item-title">My Awesome Playlist</span>
+                        <span class="main-item-subtitle"><span>Playlist</span><span class="main-item-dot">•</span><span>24 songs</span></span>
+                    </div>
+                </li>
+            </ul>
+            
+            <h3>Skeleton Placeholders</h3>
+            <ul class="left-panel-main-list" id="left-panel-skeleton">
+                <!-- Will be populated by JS -->
+            </ul>
+        </div>
+        
+        <!-- MAIN SONG LIST TEST -->
+        <div class="panel">
+            <h2>🎵 Main Song List <span class="badge">Virtual Scroll</span></h2>
+            <h3>Real Items</h3>
+            <div class="song-list" id="song-list-real">
+                <div class="song-item">
+                    <div class="song-number-item">1</div>
+                    <div class="left-song-item">
+                        <div class="song-cover" style="background:#2a2a2a;"></div>
+                        <div class="song-info">
+                            <div class="song-title">Bohemian Rhapsody</div>
+                            <div class="song-artist">Queen</div>
+                        </div>
+                    </div>
+                    <div class="song-album">A Night at the Opera</div>
+                    <div class="right-song-item">
+                        <div class="song-duration">5:55</div>
+                    </div>
+                </div>
+                <div class="song-item">
+                    <div class="song-number-item">2</div>
+                    <div class="left-song-item">
+                        <div class="song-cover" style="background:#2a2a2a;"></div>
+                        <div class="song-info">
+                            <div class="song-title">Billie Jean</div>
+                            <div class="song-artist">Michael Jackson</div>
+                        </div>
+                    </div>
+                    <div class="song-album">Thriller</div>
+                    <div class="right-song-item">
+                        <div class="song-duration">4:54</div>
+                    </div>
+                </div>
+                <div class="song-item">
+                    <div class="song-number-item">3</div>
+                    <div class="left-song-item">
+                        <div class="song-cover" style="background:#2a2a2a;"></div>
+                        <div class="song-info">
+                            <div class="song-title">Imagine</div>
+                            <div class="song-artist">John Lennon</div>
+                        </div>
+                    </div>
+                    <div class="song-album">Imagine</div>
+                    <div class="right-song-item">
+                        <div class="song-duration">3:04</div>
+                    </div>
+                </div>
+            </div>
+            
+            <h3>Skeleton Placeholders</h3>
+            <div class="song-list" id="song-list-skeleton">
+                <!-- Will be populated by JS -->
+            </div>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>📌 Test Notes:</strong><br>
+        • Skeleton placeholders should have the exact same height as real items (59px for left panel, 52px for song list)<br>
+        • Cover images should be square (40x40 for song list, 45x45 for left panel)<br>
+        • No content should shift when skeletons are replaced with real content<br>
+        • Use browser DevTools to inspect element sizes
+    </div>
+    
+    <script>
+        // Generate skeleton placeholders for left panel
+        const leftPanelSkeleton = document.getElementById('left-panel-skeleton');
+        for (let i = 0; i < 15; i++) {
+            const skeleton = document.createElement('li');
+            skeleton.className = 'left-panel-main-item lazy-skeleton';
+            skeleton.style.cssText = 'min-height: 59px; height: 59px; max-height: 59px; display: flex; align-items: center; gap: 12px; padding: 7px; border-radius: 6px;';
+            skeleton.innerHTML = `
+                <div class="main-item-cover-wrapper" style="width: 45px; height: 45px; flex-shrink: 0;">
+                    <div style="width: 45px; height: 45px; background: #2a2a2a; border-radius: 8px;"></div>
+                </div>
+                <div class="main-item-info" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
+                    <div class="main-item-title" style="width: 60%; height: 14px; background: #2a2a2a; border-radius: 4px;"></div>
+                    <div class="main-item-subtitle" style="width: 40%; height: 12px; background: #2a2a2a; border-radius: 4px;"></div>
+                </div>
+            `;
+            leftPanelSkeleton.appendChild(skeleton);
+        }
+        
+        // Generate skeleton placeholders for song list (square cover 40x40)
+        const songListSkeleton = document.getElementById('song-list-skeleton');
+        for (let i = 0; i < 15; i++) {
+            const skeleton = document.createElement('div');
+            skeleton.className = 'song-item lazy-skeleton';
+            skeleton.style.cssText = 'min-height: 52px; height: 52px; display: grid; grid-template-columns: 40px 1fr 0.82fr auto; align-items: center; padding: 7px 0;';
+            skeleton.innerHTML = `
+                <div class="song-number-item" style="width: 20px; height: 12px; background: #2a2a2a; border-radius: 4px;"></div>
+                <div class="left-song-item">
+                    <div class="song-cover" style="width: 40px; height: 40px; background: #2a2a2a; border-radius: 6px; flex-shrink: 0;"></div>
+                    <div class="song-info">
+                        <div class="song-title" style="width: 60%; height: 14px; background: #2a2a2a; border-radius: 4px;"></div>
+                        <div class="song-artist" style="width: 40%; height: 12px; background: #2a2a2a; border-radius: 4px;"></div>
+                    </div>
+                </div>
+                <div class="song-album" style="width: 70%; height: 12px; background: #2a2a2a; border-radius: 4px;"></div>
+                <div class="right-song-item">
+                    <div class="song-duration" style="width: 36px; height: 12px; background: #2a2a2a; border-radius: 4px;"></div>
+                </div>
+            `;
+            songListSkeleton.appendChild(skeleton);
+        }
+        
+        // Log heights for verification
+        setTimeout(() => {
+            const leftReal = document.querySelector('#left-panel-real .left-panel-main-item');
+            const leftSkel = document.querySelector('#left-panel-skeleton .left-panel-main-item');
+            const songReal = document.querySelector('#song-list-real .song-item');
+            const songSkel = document.querySelector('#song-list-skeleton .song-item');
+            
+            console.log('=== HEIGHT COMPARISON ===');
+            console.log('Left panel real height:', leftReal?.offsetHeight + 'px');
+            console.log('Left panel skeleton height:', leftSkel?.offsetHeight + 'px');
+            console.log('Difference:', (leftReal?.offsetHeight - leftSkel?.offsetHeight) + 'px');
+            console.log('---');
+            console.log('Song list real height:', songReal?.offsetHeight + 'px');
+            console.log('Song list skeleton height:', songSkel?.offsetHeight + 'px');
+            console.log('Difference:', (songReal?.offsetHeight - songSkel?.offsetHeight) + 'px');
+            
+            // Check cover squareness
+            const songCover = document.querySelector('#song-list-skeleton .song-cover');
+            if (songCover) {
+                console.log('---');
+                console.log('Song cover width:', songCover.offsetWidth + 'px');
+                console.log('Song cover height:', songCover.offsetHeight + 'px');
+                console.log('Is square:', songCover.offsetWidth === songCover.offsetHeight ? '✅ YES' : '❌ NO');
+            }
+            
+            if (leftReal?.offsetHeight === leftSkel?.offsetHeight) {
+                console.log('✅ Left panel heights match!');
+            } else {
+                console.log('❌ Left panel heights MISMATCH!');
+            }
+            
+            if (songReal?.offsetHeight === songSkel?.offsetHeight) {
+                console.log('✅ Song list heights match!');
+            } else {
+                console.log('❌ Song list heights MISMATCH!');
+            }
+        }, 100);
+    </script>
+</body>
+</html>

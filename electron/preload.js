@@ -1,0 +1,31 @@
+const { contextBridge, ipcRenderer } = require('electron');
+
+contextBridge.exposeInMainWorld('electronAPI', {
+    getWindowMaximized: () => ipcRenderer.invoke('get-window-maximized'),
+    onWindowMaximize: (cb) => ipcRenderer.on('window-maximized', (event, isMax) => cb(isMax)),
+    closeApp: () => ipcRenderer.send('close-app'),
+    minimizeApp: () => ipcRenderer.send('minimize-app'),
+    maximizeApp: () => ipcRenderer.send('maximize-app'),
+    showFileInExplorer: (filePath) => ipcRenderer.send('show-file-in-explorer', filePath),
+    deleteFile: (filePath) => ipcRenderer.send('delete-file', filePath),
+    changeMusicFolder: () => ipcRenderer.invoke('change-folder'),
+    focusWindow: () => ipcRenderer.send('focus-window'),
+    downloadAndScan: (url, isTemp) => ipcRenderer.invoke('download-and-scan', url, isTemp),
+    importDroppedFiles: (filePaths, targetView) => ipcRenderer.invoke('import-dropped-files', filePaths, targetView),
+    getMusicFolders: () => ipcRenderer.invoke('get-music-folders'),
+    addMusicFolder: () => ipcRenderer.invoke('add-music-folder'),
+    removeMusicFolder: (folderPath) => ipcRenderer.invoke('remove-music-folder', folderPath),
+    rebuildFromFolders: () => ipcRenderer.invoke('rebuild-from-folders'),
+    invoke: (channel, ...args) => ipcRenderer.invoke(channel, ...args),
+    getFolderStats: (folderPath) => ipcRenderer.invoke('get-folder-stats', folderPath),
+    saveLyricsFile: (defaultName, contents) => ipcRenderer.invoke('save-lyrics-file', defaultName, contents),
+    readLyricsFile: () => ipcRenderer.invoke('read-lyrics-file'),
+    pickDownloadFolder: () => ipcRenderer.invoke('pick-download-folder'),
+    resetDownloadFolder: () => ipcRenderer.invoke('reset-download-folder'),
+    getDownloadFolder: () => ipcRenderer.invoke('get-download-folder'),
+    onThumbarPrev: (cb) => ipcRenderer.on('thumbar-prev', () => cb()),
+    onThumbarPlayPause: (cb) => ipcRenderer.on('thumbar-playpause', () => cb()),
+    onThumbarNext: (cb) => ipcRenderer.on('thumbar-next', () => cb()),
+    onWindowMaximize: (cb) => ipcRenderer.on('window-maximized', (event, isMax) => cb(isMax)),
+    updateThumbarPlayState: (isPlaying) => ipcRenderer.send('update-thumbar-state', isPlaying)
+});

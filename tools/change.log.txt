@@ -1,0 +1,130 @@
+2026-09-14
+04a-ui-render-core.js
+- buildSongItemHTML: inner controls (number cell, add-to-queue button, favorite button, more-info) now block ondblclick propagation so double-clicking them no longer triggers row playback.
+- Wrapped .song-action-buttons container with ondblclick="event.stopPropagation()".
+
+2026-09-14
+09-folders-playlists.js
+- handleLeftPanelCoverBtnClick: play button on left panel items now starts playback of that item's songs without switching the current view. Previously it called playViewFromLeftPanel which navigated to the clicked playlist/folder/album/artist.
+
+2026-09-14
+03-storage.js
+- movePlayedItemToTop: early-return when the item is pinned or already at index 0 of playedItemOrder, so the left panel no longer re-renders (and hover state no longer flickers) when playing a pinned item or an item already in the top position.
+
+2026-09-14
+06c-ui-widgets.js
+- initSongDragToLeftPanel (mouseup): fixed isOverLeftPanel detection when dropping onto empty left panel space. Previously it required a .left-panel-main-item under the cursor, so dropping on blank panel area (with the drag-panel-hover border visible) silently did nothing. Now checks whether the element under the cursor is inside #left-panel, so dragging a song to empty panel space correctly adds it to Liked Songs.
+
+2026-09-14
+06a-context-menus.js
+- buildContextMenu: rewrote the "Add to playlist" submenu template literals. The version in the source had broken ${ ... } interpolations (whitespace and newlines inside the braces) which produced invalid JS. Now uses clean single-line template literals for aId/bId and for the submenu item HTML.
+
+2026-09-14
+05-lazy-load.js
+- renderVisibleItems: call hideHoverHighlight() and reset hoveredSongIndex before replacing the song list DOM, so stale hover references to removed nodes are cleared.
+- doRender: call updateHoverHighlightAfterScroll() after every render/placeholders-settle path so the hover highlight is repositioned correctly against the newly rendered rows during virtual scroll.
+
+2026-09-14
+06c-ui-widgets.js
+- initSongDragToLeftPanel: dragging a song over a non-droppable left panel item (album, artist, all-songs, history, folder, special) now behaves the same as hovering empty panel space — the panel-level drop border is shown and dropping adds the song to Liked Songs. Previously the panel border was removed and nothing happened.
+- Mousemove: droppableLeftPanelItem filters out .drag-invalid items so they don't get .drag-hover, and the panel border falls through to show.
+- Mouseup: rawTargetItem is filtered through .drag-invalid so invalid targets become null and fall through to the Liked Songs branch.
+
+2026-09-14
+03-storage.js
+- Added folder-scoped pinned items storage: getFolderPinnedItemsMap, saveFolderPinnedItemsMap, getFolderPinnedItems, isItemPinnedInFolder, togglePinItemInFolder (localStorage key folderPinnedItems; per-folder array of pin ids).
+- buildFolderChildItems now uses getFolderPinnedItems(folderId) instead of the global getPinnedItems(), so pin sorting inside a folder is independent of the root panel.
+
+06a-context-menus.js
+- showLeftPanelItemContextMenu and showFolderContextMenu: when currentOpenFolderId is set, pin/unpin now targets the folder-scoped pinned list and the menu label changes to "Pin inside this folder" / "Unpin inside this folder" instead of "Pin to top" / "Unpin from top".
+
+2026-09-14
+04b-ui-render-views.js
+- renderFolderContents: subtitle now renders the pinned-indicator thumbtack icon when item.isPinned is true, matching the root left panel.
+
+06c-ui-widgets.js
+- initLeftPanelDragAndDrop: now folder-aware. Added isFolderContext, getActivePinList, saveActivePinList, isActivePinned helpers that switch between global pinnedItems and folder-scoped folderPinnedItems based on currentOpenFolderId.
+- updateDropTarget / onMouseUp / mousedown setup: use the active pin helpers, and inside a folder only pinned items are valid drop targets (folder-drop mode is disabled inside folders). Drag-reordering of pinned items inside a folder now works.
+
+2026-09-14
+03-storage.js
+- togglePinItemInFolder: no longer calls renderFolderContents unconditionally; delegates to new refreshLeftPanelAfterFolderPinChange(folderId), which rerenders the folder view when the folder is open, or rerenders the root left panel list (virtual or plain) when the folder is only shown expanded in the root.
+
+04b-ui-render-views.js
+- renderFolderContents: items now carry data-parent-folder="<folderId>" so context menu and drag code can determine which folder an item belongs to.
+
+05-lazy-load.js
+- buildLeftPanelItemAt: root left panel items now carry data-parent-folder="<parentKey>" (root items get "root").
+
+06a-context-menus.js
+- Added getContainingFolderIdFromEvent(event) — resolves the folder an item lives in from currentOpenFolderId or from the item's data-parent-folder attribute.
+- showLeftPanelItemContextMenu and showFolderContextMenu: use getContainingFolderIdFromEvent instead of currentOpenFolderId, so pinning items inside a folder works both when the folder is open and when its contents are shown expanded in the root view.
+
+06c-ui-widgets.js
+- initLeftPanelDragAndDrop: added dragFolderId captured on mousedown via getFolderIdForElement, and switched pin helpers to getActivePinListForFolder/saveActivePinListForFolder. Drag-reordering of pinned items inside folders now works in the root view too (when folder contents are expanded).
+
+2026-09-14
+06c-ui-widgets.js
+- initLeftPanelDragAndDrop: removed accidental duplicate block of getFolderIdForElement / getActivePinListForFolder / saveActivePinListForFolder helpers that appeared immediately after isActivePinned.
+- initSongDragToLeftPanel / onBlurCleanup: removed stray references to dragItem / dragItemId / dragItemType / dragItemPinId (which belong to initLeftPanelDragAndDrop); replaced with dragSongId = null so the blur cleanup no longer throws ReferenceError.
+
+04b-ui-render-views.js
+- renderLyricsView: fixed broken template literal in the synced variants section — the interpolation and surrounding markup were split across lines with stray whitespace and characters; replaced with a clean single-line `<div class="synced-variants-list">${rows}</div>` and restored the outer container.innerHTML closing backtick.
+
+2026-09-14
+07-views.js
+- openDetailView: restores the content-gradient-wrapper by removing the no-gradient class, so the subhero gradient reappears when navigating back to an album or artist view from settings.
+
+09-folders-playlists.js
+- openPlaylist: same fix — remove no-gradient from content-gradient-wrapper so the subhero gradient reappears when navigating back to a playlist from settings.
+
+2026-09-14
+styles.css
+- Added collapsed left panel rules: hide .left-panel-playing-icon, suppress .subfolder-row hover/active background, hide the cover play button and its hover overlay when .left-panel.collapsed is set.
+
+09-folders-playlists.js
+- Delegated .left-panel-cover-play-btn click handler: early-return when leftPanelCollapsed so play/pause cannot be triggered in collapsed mode.
+
+2026-09-14
+music_player.html
+- Added a collapsed-folder-back-btn button inside the left panel header, between the header title-group/folder-nav-bar wrapper and the create-playlist button. Hidden by default; shown via the .visible class when collapsed and inside a folder.
+
+styles.css
+- Removed the green playing ::after accent bar in collapsed left panel mode (that was the "green thing popping while playing").
+- Added .collapsed-folder-back-btn styles (hidden by default; shown when .left-panel.collapsed .collapsed-folder-back-btn.visible).
+- Added rule to hide the regular folder-nav-bar when the left panel is collapsed (avoids duplicate back buttons and long folder names).
+
+09-folders-playlists.js
+- openFolder: adds .visible to #collapsed-folder-back-btn when entering a folder.
+- closeFolder: removes .visible from #collapsed-folder-back-btn when leaving all folders (going back to root).
+
+2026-09-14
+music_player.html
+- Removed the inline style="display: none" from #collapsed-folder-back-btn; visibility is now controlled solely by the .visible class in CSS (inline style was overriding the CSS rule).
+
+styles.css
+- .collapsed-folder-back-btn: added transition, :active scale, and hover color/background overrides inside the collapsed context so the button visually matches the other header buttons.
+
+2026-09-14
+music_player.html
+- player-cover and album-art-image now have onerror fallbacks to PLACEHOLDER_IMAGE (with this.onerror=null to prevent loops) so broken cover URLs no longer leave the player and track-info panel blank.
+
+04a-ui-render-core.js
+- buildSongItemHTML: song-cover onerror now sets this.onerror=null before falling back to PLACEHOLDER_IMAGE, preventing potential infinite error loops.
+
+08-panels.js
+- updateAlbumArt: largeCover picks the first non-empty trimmed string among currentSong.largeCover, currentSong.cover, and PLACEHOLDER_IMAGE, so whitespace-only or non-string cover values fall back cleanly.
+
+10-playback.js
+- playSongFromQueue: player-cover src now uses the same "first non-empty trimmed string" guard before falling back to PLACEHOLDER_IMAGE.
+
+2026-09-14
+99-player.js
+- Added window.PLACEHOLDER_IMAGE = PLACEHOLDER_IMAGE so inline HTML event handlers (onerror/onload/onclick) can resolve the placeholder. Top-level const declarations are not visible from inline handlers because they live in script scope, not the global object.
+
+2026-09-14
+music_player.html
+- #player-cover and #album-art-image now use src="{{PLACEHOLDER_IMAGE}}" and onerror="this.onerror=null; this.src='{{PLACEHOLDER_IMAGE}}'" so the placeholder data URI is baked directly into the attribute at build time. Inline handlers no longer reference the PLACEHOLDER_IMAGE variable, which is not resolvable from inline HTML event handlers because it is a top-level const in player.js.
+
+music_player.py
+- generate_html_template: also substitutes {{PLACEHOLDER_IMAGE}} in the HTML template (previously only {{SONGS_COUNT}} was replaced).
