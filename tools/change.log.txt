@@ -763,3 +763,123 @@ electron/metadata-editor.py
 electron/metadata-editor.py
 - Fixed ID3 detection to inspect the Mutagen tag object rather than the container audio object, so MP3 metadata writes use real ID3 Frame instances.
 - This fixes manual and imported metadata saves that previously failed with "not a frame instance" errors.
+
+2026-09-15
+14-song-navigation.js
+- Added applyScrollToSong: computes and applies the scroll position for a song in both virtual-scroll and plain lists, and returns whether the scroll landed.
+- scrollToSongInCurrentView: retries applyScrollToSong across requestAnimationFrame frames until the scroll sticks, so it works even when the list height isn't ready on the first frame.
+- switchToViewAndScroll: scrolls synchronously right after the view switch so the destination view paints directly at the song's position instead of flashing the top of the list first.
+
+tools/prompt.txt
+- Updated the 14-song-navigation.js function list to include applyScrollToSong.
+
+2026-09-15
+styles.css
+- track-lyrics-box is now dimmed (opacity 0.35, grayscale 0.7) and inert (pointer-events none, no user-select) while body.in-lyrics-view is set.
+
+07-views.js
+- switchView: while the lyrics view is not active, the compact lyrics body scroll position is reset to 0 alongside the existing in-lyrics-view class removal.
+
+2026-09-15
+styles.css
+- track-lyrics-box is now fully hidden (opacity 0) and inert (pointer-events none, no user-select) while body.in-lyrics-view is set.
+
+08-panels.js
+- updateTrackLyricsHighlight and scrollTrackLyricsToActive now early-return while the big lyrics view is open so the compact box does nothing in the background.
+
+2026-09-15
+styles.css
+- track-lyrics-box now uses filter: blur(4px) instead of opacity 0 while body.in-lyrics-view is set, keeping the box visible but out of focus.
+
+08-panels.js
+- Reverted the in-lyrics-view early-returns in updateTrackLyricsHighlight and scrollTrackLyricsToActive.
+
+2026-09-15
+styles.css
+- Moved the in-lyrics-view treatment from .track-lyrics-box to .track-lyrics-text and reduced the blur from 4px to 2px, so only the lyric lines blur while the header and footer stay sharp.
+
+08-panels.js
+- scrollTrackLyricsToActive now early-returns while the big lyrics view is open so the compact lyrics box no longer auto-scrolls.
+
+2026-09-15
+08-panels.js
+- updateTrackLyricsHighlight now early-returns while the big lyrics view is open so the compact lyrics box keeps its highlight frozen.
+
+2026-09-15
+08-panels.js
+- applyTrackLyricsExpandedState now forces the collapsed state while body.in-lyrics-view is set.
+- toggleTrackLyricsExpand now early-returns while the big lyrics view is open so the expand chevron does nothing.
+
+2026-09-15
+07-views.js
+- switchView now calls applyTrackLyricsExpandedState when the lyrics-view class is toggled so the compact lyrics box collapses immediately on entering the big lyrics view.
+
+2026-09-15
+07-views.js
+- switchView now calls applyTrackLyricsExpandedState on both entering and leaving the lyrics view and refreshes the compact lyrics scrollbar after the height transition, so the box expands/collapses smoothly and reposition correctly.
+
+2026-09-15
+04b-ui-render-views.js
+- renderLyricsView no longer renders the Multi-song finder button in its footer.
+
+19-online-lyrics.js
+- renderOnlineLyricsView now shows a header actions column on the right with Back to Lyrics (when applicable) stacked above a new Find for multiple songs button that calls openSmartLyricsFinder.
+
+styles.css
+- Added .online-lyrics-header-actions for the stacked right-aligned header buttons in the online lyrics view.
+
+2026-09-15
+19-online-lyrics.js
+- Online lyrics header: removed the ONLINE LYRICS kicker and changed the title to "Find lyrics & LRC".
+- Online lyrics search panel: Search now comes before Clear.
+- Multi-song finder header: removed the LYRICS TOOLS kicker and renamed the title to "Find multi song lyrics & LRC".
+- Header button label changed to "Find multi song lyrics & LRC".
+
+2026-09-15
+19-online-lyrics.js
+- Removed the icons from the online lyrics Search and Clear buttons.
+- Multi-song finder list now renders rows as standard .song-item grid rows (cover, title, artist, album, status in the duration slot) with a checkbox in the number cell and no duration/heart/add-to-queue controls.
+
+styles.css
+- Rewrote the smart-lyrics-song-row styles so the multi-song finder list reuses the main song-item grid look; removed the flex-based row layout and the separate cover/info styles.
+
+2026-09-15
+00-state.js
+- Added DISABLE_COVERS flag for testing.
+
+04a-ui-render-core.js
+- buildSongItemHTML and renderRightPanelItem now use PLACEHOLDER_IMAGE instead of the real cover when DISABLE_COVERS is set.
+
+04b-ui-render-views.js
+- Left panel playlist/album/artist item covers now fall back to their SVG placeholder when DISABLE_COVERS is set.
+
+05-lazy-load.js
+- Left panel lazy-loaded playlist/album/artist item covers now fall back to their SVG placeholder when DISABLE_COVERS is set.
+
+08-panels.js
+- updateTrackNextBox and updateAlbumArt now use PLACEHOLDER_IMAGE when DISABLE_COVERS is set.
+
+10-playback.js
+- playSongFromQueue now uses PLACEHOLDER_IMAGE for the player cover when DISABLE_COVERS is set.
+
+2026-09-15
+00-state.js
+- Added DISABLE_COVER_PLACEHOLDER flag.
+
+04a-ui-render-core.js
+- buildSongItemHTML and renderRightPanelItem skip the cover element entirely when DISABLE_COVER_PLACEHOLDER is set.
+
+04b-ui-render-views.js
+- Left panel item cover branches and the playlist/folder view coverHTML now skip the cover entirely when DISABLE_COVER_PLACEHOLDER is set.
+
+05-lazy-load.js
+- buildLeftPanelItemAt starts with an empty coverContent when DISABLE_COVER_PLACEHOLDER is set.
+
+08-panels.js
+- updateTrackNextBox skips the cover image and updateAlbumArt hides the album art when DISABLE_COVER_PLACEHOLDER is set.
+
+10-playback.js
+- playSongFromQueue hides the player cover when DISABLE_COVER_PLACEHOLDER is set.
+
+19-online-lyrics.js
+- Multi-song finder list rows now honor DISABLE_COVERS and skip the cover when DISABLE_COVER_PLACEHOLDER is set.

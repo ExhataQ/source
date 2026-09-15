@@ -48,7 +48,6 @@ let lastRightPanelStateBeforeQueue = {
     wasCollapsed: false,
     wasTab: 'tags'
 };
-
 // ==============================================================================
 // EXTENDED METADATA FIELDS
 // ==============================================================================

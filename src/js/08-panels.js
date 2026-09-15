@@ -515,58 +515,53 @@ function applyTrackLyricsExpandedState() {
     const container = document.querySelector('.track-lyrics-body-container');
     const icon = document.getElementById('track-lyrics-expand-icon');
     if (!container) return;
-    if (trackLyricsExpanded) {
-        container.classList.add('expanded');
-        if (icon) icon.textContent = 'expand_less';
-    } else {
-        container.classList.remove('expanded');
-        if (icon) icon.textContent = 'expand_more';
-    }
+    const inLyricsView = document.body.classList.contains('in-lyrics-view');
+    const shouldExpand = !inLyricsView && trackLyricsExpanded;
+
+    container.classList.toggle('expanded', shouldExpand);
+    if (icon) icon.textContent = shouldExpand ? 'expand_less' : 'expand_more';
+
+    const targetHeight = shouldExpand ? 280 : 78;
+    container.style.transition = 'height 0.25s ease, max-height 0.25s ease';
+    container.style.height = targetHeight + 'px';
+    container.style.maxHeight = targetHeight + 'px';
+
+    setTimeout(() => {
+        if (typeof updateScrollbarById === 'function') {
+            updateScrollbarById('track-lyrics-body');
+        }
+        if (shouldExpand && trackLyricsActiveIndex >= 0 && trackLyricsLineElements[trackLyricsActiveIndex]) {
+            trackLyricsUserScrolledAway = false;
+            hideTrackLyricsSyncButton();
+            const body = document.getElementById('track-lyrics-body');
+            if (body) {
+                const el = trackLyricsLineElements[trackLyricsActiveIndex];
+                const containerRect = body.getBoundingClientRect();
+                const elRect = el.getBoundingClientRect();
+                const offset = elRect.top - containerRect.top - containerRect.height / 2 + elRect.height / 2;
+                trackLyricsProgrammaticScroll = true;
+                body.scrollTo({
+                    top: body.scrollTop + offset,
+                    behavior: 'smooth'
+                });
+                clearTimeout(window._trackLyricsScrollTimeout);
+                window._trackLyricsScrollTimeout = setTimeout(() => {
+                    trackLyricsProgrammaticScroll = false;
+                }, 700);
+            }
+        }
+    }, 300);
 }
 
 function toggleTrackLyricsExpand() {
+    if (document.body.classList.contains('in-lyrics-view')) return;
     trackLyricsExpanded = !trackLyricsExpanded;
     applyTrackLyricsExpandedState();
-
-    const container = document.querySelector('.track-lyrics-body-container');
-    if (!container) {
-        setTimeout(() => updateScrollbarById('track-lyrics-body'), 220);
-        return;
-    }
-
-    const start = performance.now();
-    const duration = 260;
-
-    const tick = () => {
-        updateScrollbarById('track-lyrics-body');
-        if (performance.now() - start < duration) {
-            requestAnimationFrame(tick);
-        }
-    };
-
-    requestAnimationFrame(tick);
-
-    let finished = false;
-    const done = () => {
-        if (finished) return;
-        finished = true;
-        container.removeEventListener('transitionend', onEnd);
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                updateScrollbarById('track-lyrics-body');
-            });
-        });
-    };
-    const onEnd = (e) => {
-        if (e.propertyName === 'height') done();
-    };
-
-    container.addEventListener('transitionend', onEnd);
-    setTimeout(done, duration + 100);
 }
 
 function updateTrackLyricsHighlight(currentTime) {
     if (!trackLyricsEntries || trackLyricsLineElements.length === 0) return;
+    if (document.body.classList.contains('in-lyrics-view')) return;
 
     let lo = 0;
     let hi = trackLyricsEntries.length - 1;
@@ -609,6 +604,7 @@ function seekTrackLyricsToLine(index) {
 function scrollTrackLyricsToActive(silent) {
     const container = document.getElementById('track-lyrics-body');
     if (!container) return;
+    if (document.body.classList.contains('in-lyrics-view')) return;
     if (trackLyricsActiveIndex < 0 || !trackLyricsLineElements[trackLyricsActiveIndex]) return;
 
     trackLyricsProgrammaticScroll = true;

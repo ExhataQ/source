@@ -184,7 +184,7 @@ Source/src/js/ contains (loaded in numeric order):
 
 13-song-highlight.js — Song highlight system: getSlotIdentifier, paintEqOnNumberCell, unpaintEqOnNumberCell, updatePlayingHighlight, applyStoredHighlight, reapplyHighlightAfterFilter, applyHistoryStoredHighlight.
 
-14-song-navigation.js — Song navigation: navigateToCurrentArtist, navigateToCurrentSongInList, scrollToSongItem, switchToViewAndScroll, scrollToSongInCurrentView.
+14-song-navigation.js — Song navigation: navigateToCurrentArtist, navigateToCurrentSongInList, scrollToSongItem, applyScrollToSong, switchToViewAndScroll, scrollToSongInCurrentView.
 
 15-playback-controls.js — Playback controls: formatTime, toggleTimeDisplay, updateTimeDisplay; play/shuffle/repeat/next/prev button handlers; audio event handlers (onplay, onpause, onended, ontimeupdate, onloadedmetadata); refreshCurrentRowIndicator, handleNumberCellClick, syncPlayPauseButtons; progress bar seeking (startSeek, doSeekGlobal, stopSeekGlobal, updateSeekPosition, createProgressTooltip, updateProgressTooltip, showProgressTooltip, hideProgressTooltip); volume control (setVolume, updateVolume, toggleMute, drag handlers); thumbar wiring; window maximize icon.
 

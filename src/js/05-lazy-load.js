@@ -266,6 +266,32 @@ function renderVisibleItems(content, showPlaceholders) {
     }
 }
 
+const VIRTUAL_SCROLL_HIGHLIGHT_THROTTLE_MS = 80;
+let virtualScrollHighlightThrottleTimer = null;
+let virtualScrollHighlightTrailingPending = false;
+let virtualScrollHighlightTrailingListId = null;
+
+function scheduleVirtualScrollHighlightUpdate(listId) {
+    virtualScrollHighlightTrailingListId = listId;
+    if (virtualScrollHighlightThrottleTimer) {
+        virtualScrollHighlightTrailingPending = true;
+        return;
+    }
+    runVirtualScrollHighlightUpdate(listId);
+    virtualScrollHighlightThrottleTimer = setTimeout(() => {
+        virtualScrollHighlightThrottleTimer = null;
+        if (virtualScrollHighlightTrailingPending) {
+            virtualScrollHighlightTrailingPending = false;
+            scheduleVirtualScrollHighlightUpdate(virtualScrollHighlightTrailingListId);
+        }
+    }, VIRTUAL_SCROLL_HIGHLIGHT_THROTTLE_MS);
+}
+
+function runVirtualScrollHighlightUpdate(listId) {
+    reapplySelectionState();
+    applyStoredHighlight(listId);
+}
+
 function initLazyLoading(songs, listId) {
     if (currentView === 'settings') return;
 
@@ -316,29 +342,26 @@ function initLazyLoading(songs, listId) {
                 renderVisibleItems(content, false);
                 lastRenderedStart = virtualScrollState.firstVisibleIndex;
                 lastRenderedEnd = virtualScrollState.lastVisibleIndex;
-                reapplySelectionState();
-                applyStoredHighlight(virtualScrollState.currentListId);
-                if (typeof updateHoverHighlightAfterScroll === 'function') {
-                    updateHoverHighlightAfterScroll();
+                runVirtualScrollHighlightUpdate(virtualScrollState.currentListId);
+                if (typeof scheduleHoverHighlightUpdate === 'function') {
+                    scheduleHoverHighlightUpdate();
                 }
             }, 150);
         } else if (startIndex > lastRenderedEnd || endIndex < lastRenderedStart) {
             renderVisibleItems(content, false);
             lastRenderedStart = startIndex;
             lastRenderedEnd = endIndex;
-            reapplySelectionState();
-            applyStoredHighlight(virtualScrollState.currentListId);
-            if (typeof updateHoverHighlightAfterScroll === 'function') {
-                updateHoverHighlightAfterScroll();
+            scheduleVirtualScrollHighlightUpdate(virtualScrollState.currentListId);
+            if (typeof scheduleHoverHighlightUpdate === 'function') {
+                scheduleHoverHighlightUpdate();
             }
         } else {
             renderVisibleItems(content, false);
             lastRenderedStart = startIndex;
             lastRenderedEnd = endIndex;
-            reapplySelectionState();
-            applyStoredHighlight(virtualScrollState.currentListId);
-            if (typeof updateHoverHighlightAfterScroll === 'function') {
-                updateHoverHighlightAfterScroll();
+            scheduleVirtualScrollHighlightUpdate(virtualScrollState.currentListId);
+            if (typeof scheduleHoverHighlightUpdate === 'function') {
+                scheduleHoverHighlightUpdate();
             }
         }
 

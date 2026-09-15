@@ -145,6 +145,79 @@ function scrollToSongItem(songIndex) {
     }
 }
 
+function applyScrollToSong(songId, listId) {
+    const content = document.querySelector('.content');
+    if (!content) return false;
+
+    const songList = document.getElementById('song-list');
+    if (!songList) return false;
+
+    if (
+        typeof virtualScrollState !== 'undefined' &&
+        virtualScrollState.enabled &&
+        virtualScrollState.currentListId === listId
+    ) {
+        const idx = virtualScrollState.currentSongs.findIndex((s) => s.id === songId);
+        if (idx === -1) return false;
+
+        const itemHeight = typeof ITEM_HEIGHT !== 'undefined' ? ITEM_HEIGHT : 52;
+        const songListRect = songList.getBoundingClientRect();
+        const contentRect = content.getBoundingClientRect();
+        const offsetAboveSongList = songListRect.top - contentRect.top + content.scrollTop;
+        const viewportHeight = content.clientHeight;
+        const target = Math.max(
+            0,
+            idx * itemHeight - viewportHeight / 2 + itemHeight / 2 + offsetAboveSongList
+        );
+
+        content.scrollTop = target;
+
+        virtualScrollState.visibleItems = [];
+        virtualScrollState.firstVisibleIndex = -1;
+        virtualScrollState.lastVisibleIndex = -1;
+        if (typeof renderVisibleItems === 'function') {
+            renderVisibleItems(content, false);
+        }
+        if (typeof applyStoredHighlight === 'function') {
+            applyStoredHighlight(listId);
+        }
+
+        const scrollbar = document.getElementById('external-scrollbar');
+        if (scrollbar) scrollbar.classList.add('visible');
+
+        return Math.abs(content.scrollTop - target) < 4;
+    }
+
+    const items = songList.querySelectorAll('.song-item:not(.lazy-skeleton)');
+    for (let i = 0; i < items.length; i++) {
+        const id = parseInt(items[i].getAttribute('data-song-id'));
+        if (id === songId) {
+            const containerRect = content.getBoundingClientRect();
+            const itemRect = items[i].getBoundingClientRect();
+            const offset = itemRect.top - containerRect.top - containerRect.height / 2 + itemRect.height / 2;
+            content.scrollTop += offset;
+
+            const scrollbar = document.getElementById('external-scrollbar');
+            if (scrollbar) scrollbar.classList.add('visible');
+            return true;
+        }
+    }
+
+    return false;
+}
+
+function scrollToSongInCurrentView(songId, listId) {
+    let attempts = 0;
+    const tryScroll = () => {
+        const ok = applyScrollToSong(songId, listId);
+        attempts++;
+        if (!ok && attempts < 12) {
+            requestAnimationFrame(tryScroll);
+        }
+    };
+    tryScroll();
+}
+
 function switchToViewAndScroll(targetView, songIndex, songId, sourceListId) {
     if (targetView && targetView.startsWith('playlist-')) {
         const playlistId = targetView.replace('playlist-', '');
@@ -152,9 +225,7 @@ function switchToViewAndScroll(targetView, songIndex, songId, sourceListId) {
         const playlist = playlists.find((p) => p.id == playlistId || p.id === playlistId);
         if (playlist) {
             openPlaylist(playlistId, () => {
-                setTimeout(() => {
-                    scrollToSongInCurrentView(songId, targetView);
-                }, 200);
+                scrollToSongInCurrentView(songId, targetView);
             });
         }
         return;
@@ -162,43 +233,16 @@ function switchToViewAndScroll(targetView, songIndex, songId, sourceListId) {
 
     if (targetView && targetView.startsWith('a') && targetView.length === 13) {
         openDetailView(targetView, 'album');
-        setTimeout(() => {
-            scrollToSongInCurrentView(songId, targetView);
-        }, 200);
+        scrollToSongInCurrentView(songId, targetView);
         return;
     }
 
     if (targetView && targetView.startsWith('r') && targetView.length === 13) {
         openDetailView(targetView, 'artist');
-        setTimeout(() => {
-            scrollToSongInCurrentView(songId, targetView);
-        }, 200);
+        scrollToSongInCurrentView(songId, targetView);
         return;
     }
 
     switchView(targetView);
-
-    setTimeout(() => {
-        scrollToSongInCurrentView(songId, targetView);
-    }, 200);
-}
-
-function scrollToSongInCurrentView(songId, listId) {
-    const songItems = document.querySelectorAll('.song-item');
-    let targetIndex = -1;
-
-    for (let i = 0; i < songItems.length; i++) {
-        const id = parseInt(songItems[i].getAttribute('data-song-id'));
-        if (id === songId) {
-            targetIndex = i;
-            break;
-        }
-    }
-
-    if (targetIndex !== -1) {
-        songItems[targetIndex].scrollIntoView({
-            behavior: 'instant',
-            block: 'center'
-        });
-    }
+    scrollToSongInCurrentView(songId, targetView);
 }

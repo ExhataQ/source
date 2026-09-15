@@ -533,6 +533,24 @@ let hoveredSongIndex = -1;
 let activeSongSlot = null;
 let hoveredRowEl = null;
 const ROW_EDGE_INSET = 25;
+const HOVER_SCROLL_THROTTLE_MS = 80;
+let hoverHighlightThrottleTimer = null;
+let hoverHighlightTrailingPending = false;
+
+function scheduleHoverHighlightUpdate() {
+    if (hoverHighlightThrottleTimer) {
+        hoverHighlightTrailingPending = true;
+        return;
+    }
+    updateHoverHighlightAfterScroll();
+    hoverHighlightThrottleTimer = setTimeout(() => {
+        hoverHighlightThrottleTimer = null;
+        if (hoverHighlightTrailingPending) {
+            hoverHighlightTrailingPending = false;
+            scheduleHoverHighlightUpdate();
+        }
+    }, HOVER_SCROLL_THROTTLE_MS);
+}
 
 function createHighlightDiv() {
     const div = document.createElement('div');
@@ -609,7 +627,7 @@ function initHoverLayer() {
                         updateActiveHighlight(activeSongSlot);
                     }
                     if (!document.body.classList.contains('dragging-scrollbar')) {
-                        updateHoverHighlightAfterScroll();
+                        scheduleHoverHighlightUpdate();
                     }
                 });
             }
@@ -724,6 +742,9 @@ function handleHoverMouseLeave() {
 }
 
 function hideHoverHighlight() {
+    clearTimeout(hoverHighlightThrottleTimer);
+    hoverHighlightThrottleTimer = null;
+    hoverHighlightTrailingPending = false;
     const hoverEl = document.getElementById('hover-highlight-single');
     if (hoverEl) hoverEl.style.display = 'none';
     if (hoveredRowEl) {

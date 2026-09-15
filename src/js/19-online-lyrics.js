@@ -79,17 +79,32 @@ function updateSmartLyricsFinderList() {
         list.innerHTML = '<div class="smart-lyrics-empty"><span class="material-symbols-outlined">search_off</span><span>No songs match</span></div>';
         return;
     }
-    list.innerHTML = songs.map(song => {
+    list.innerHTML = songs.map((song, index) => {
         const selected = smartLyricsFinderState.selectedIds.has(song.id);
         const result = smartLyricsFinderState.results.get(song.id);
         const stateClass = result ? (result.success ? 'found' : 'failed') : '';
         const stateText = result ? (result.success ? (result.type === 'lrc' ? 'LRC found' : 'Lyrics found') : 'Not found') : '';
-        return `<button class="smart-lyrics-song-row ${selected ? 'selected' : ''} ${stateClass}" onclick="toggleSmartLyricsSong(${song.id})" ${smartLyricsFinderState.processing ? 'disabled' : ''}>
-            <span class="smart-lyrics-checkbox material-symbols-outlined">${selected ? 'check_box' : 'check_box_outline_blank'}</span>
-            <span class="smart-lyrics-song-cover">${song.cover ? `<img src="${escapeOnlineLyricsAttribute(song.cover)}" alt="">` : '<span class="material-symbols-outlined">music_note</span>'}</span>
-            <span class="smart-lyrics-song-info"><strong>${escapeHtml(song.title || 'Unknown title')}</strong><small>${escapeHtml(song.artist || 'Unknown artist')}${song.album ? ` · ${escapeHtml(song.album)}` : ''}</small></span>
-            ${stateText ? `<span class="smart-lyrics-song-status">${escapeHtml(stateText)}</span>` : ''}
-        </button>`;
+        const coverSrc = song.cover || PLACEHOLDER_IMAGE;
+        const artistText = buildSongArtistHTML(song) || escapeHtml(song.artist || 'Unknown artist');
+        const albumText = buildSongAlbumHTML(song) || escapeHtml(song.album || '');
+
+        return `
+        <div class="song-item smart-lyrics-song-row ${selected ? 'selected' : ''} ${stateClass}" onclick="toggleSmartLyricsSong(${song.id})" data-song-id="${song.id}">
+            <div class="song-number-item smart-lyrics-checkbox">
+                <span class="material-symbols-outlined">${selected ? 'check_box' : 'check_box_outline_blank'}</span>
+            </div>
+            <div class="left-song-item">
+                <img class="song-cover" src="${coverSrc}" alt="Cover for ${escapeHtml(song.title || 'Unknown title')}" onerror="this.onerror=null; this.src=PLACEHOLDER_IMAGE">
+                <div class="song-info">
+                    <div class="song-title">${escapeHtml(song.title || 'Unknown title')}</div>
+                    <div class="song-artist">${artistText}</div>
+                </div>
+            </div>
+            <div class="song-album">${albumText}</div>
+            <div class="right-song-item">
+                <div class="song-duration smart-lyrics-song-status">${escapeHtml(stateText)}</div>
+            </div>
+        </div>`;
     }).join('');
 }
 
@@ -158,7 +173,7 @@ function renderSmartLyricsFinder() {
     root.style.display = 'block';
     root.innerHTML = `<div class="online-lyrics-view-container smart-lyrics-finder-container">
         <div class="online-lyrics-header">
-            <div><div class="online-lyrics-kicker">LYRICS TOOLS</div><h2>Multi-song lyrics finder</h2><p>Choose songs and automatically find and save synced LRC or plain lyrics.</p></div>
+            <div><h2>Find multi song lyrics &amp; LRC</h2><p>Choose songs and automatically find and save synced LRC or plain lyrics.</p></div>
             <button class="lyrics-view-edit-btn" onclick="switchView('lyrics')"><span class="material-symbols-outlined">arrow_back</span>Back to Lyrics</button>
         </div>
         <div class="smart-lyrics-toolbar">
@@ -836,35 +851,42 @@ function renderOnlineLyricsView() {
 
     const state = onlineLyricsState;
 
-    const backButtonHTML = state.fromHeader
-        ? ''
-        : `<button class="lyrics-view-edit-btn" onclick="switchView('lyrics')">
-                    <span class="material-symbols-outlined">arrow_back</span>
-                    Back to Lyrics
-                </button>`;
+    const headerActionsHTML = `
+        <div class="online-lyrics-header-actions">
+            ${
+                state.fromHeader
+                    ? ''
+                    : `<button class="lyrics-view-edit-btn" onclick="switchView('lyrics')">
+                            <span class="material-symbols-outlined">arrow_back</span>
+                            Back to Lyrics
+                        </button>`
+            }
+            <button class="lyrics-view-edit-btn" onclick="openSmartLyricsFinder()">
+                <span class="material-symbols-outlined">library_music</span>
+                Find multi song lyrics &amp; LRC
+            </button>
+        </div>
+    `;
 
     container.innerHTML = `
         <div class="online-lyrics-view-container">
             <div class="online-lyrics-header">
                 <div>
-                    <div class="online-lyrics-kicker">ONLINE LYRICS</div>
-                    <h2>Find lyrics / LRC</h2>
+                    <h2>Find lyrics &amp; LRC</h2>
                     <p>Search LRCLIB by artist and title, then use or download the result.</p>
                 </div>
-                ${backButtonHTML}
+                ${headerActionsHTML}
             </div>
 
             <div class="online-lyrics-search-panel">
                 <input id="online-lyrics-title" value="${escapeOnlineLyricsAttribute(state.title)}" placeholder="Song title">
                 <input id="online-lyrics-artist" value="${escapeOnlineLyricsAttribute(state.artist)}" placeholder="Artist name">
                 <input id="online-lyrics-album" value="${escapeOnlineLyricsAttribute(state.album)}" placeholder="Album">
-                <button class="lyrics-view-edit-btn online-lyrics-search-btn" onclick="clearOnlineLyricsSearchInputs()" title="Clear search fields">
-                    <span class="material-symbols-outlined">backspace</span>
-                    Clear
-                </button>
                 <button class="lyrics-view-edit-btn online-lyrics-search-btn" onclick="searchOnlineLyrics()">
-                    <span class="material-symbols-outlined">search</span>
                     Search
+                </button>
+                <button class="lyrics-view-edit-btn online-lyrics-search-btn" onclick="clearOnlineLyricsSearchInputs()" title="Clear search fields">
+                    Clear
                 </button>
             </div>
 

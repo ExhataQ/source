@@ -1152,10 +1152,6 @@ function renderLyricsView() {
                     <span class="material-symbols-outlined">language</span>
                     <span>Find lyrics / LRC online</span>
                 </button>
-                <button class="lyrics-view-edit-btn lyrics-online-btn" onclick="openSmartLyricsFinder()" aria-label="Find lyrics or LRC for multiple songs">
-                    <span class="material-symbols-outlined">library_music</span>
-                    <span>Multi-song finder</span>
-                </button>
             </div>
             ${(() => {
                 const entry =

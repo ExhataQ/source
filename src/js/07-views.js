@@ -860,8 +860,18 @@ function switchView(view) {
         const songListContainer = document.getElementById('song-list-container');
         if (songListContainer) songListContainer.style.display = '';
         document.body.classList.remove('in-lyrics-view');
+        const trackLyricsBody = document.getElementById('track-lyrics-body');
+        if (trackLyricsBody) trackLyricsBody.scrollTop = 0;
+        if (typeof applyTrackLyricsExpandedState === 'function') {
+            applyTrackLyricsExpandedState();
+            requestAnimationFrame(() => applyTrackLyricsExpandedState());
+        }
     } else {
         document.body.classList.toggle('in-lyrics-view', view === 'lyrics');
+        if (typeof applyTrackLyricsExpandedState === 'function') {
+            applyTrackLyricsExpandedState();
+            requestAnimationFrame(() => applyTrackLyricsExpandedState());
+        }
     }
 
     if (virtualScrollState.enabled && view !== currentView) {
@@ -1007,6 +1017,10 @@ function switchView(view) {
             </div>
         `;
         refreshUIAfterViewSwitch();
+    }
+
+    if (typeof applyTrackLyricsExpandedState === 'function') {
+        applyTrackLyricsExpandedState();
     }
 }
 
