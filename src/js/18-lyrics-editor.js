@@ -37,6 +37,14 @@ function setLyricsForSong(songId, lyricsText) {
         store[key] = String(lyricsText);
     }
     saveCustomLyricsStore(store);
+
+    if (typeof renderTrackLyricsBox === 'function') {
+        const queueItem = currentQueueIndex >= 0 ? playbackQueue[currentQueueIndex] : null;
+        const currentSong = queueItem ? queueItem.song || queueItem : null;
+        if (currentSong && currentSong.id === songId) {
+            renderTrackLyricsBox();
+        }
+    }
 }
 
 // ==============================================================================
@@ -166,19 +174,31 @@ function setSyncedLyricsForSong(songId, lrcText) {
         const { entry } = _getOrCreateEntry(songId);
         return entry;
     })();
-    if (existing.variants.length === 0) {
-        return addSyncedLyricsVariant(songId, lrcText, 0);
+    const result =
+        existing.variants.length === 0
+            ? addSyncedLyricsVariant(songId, lrcText, 0)
+            : (() => {
+                  const { store, key, entry } = _getOrCreateEntry(songId);
+                  const active = entry.variants.find((v) => v.id === entry.activeId) || entry.variants[0];
+                  if (active) {
+                      active.text = String(lrcText);
+                      active.createdAt = Date.now();
+                      store[key] = entry;
+                      saveSyncedLyricsStore(store);
+                      return active;
+                  }
+                  return addSyncedLyricsVariant(songId, lrcText, 0);
+              })();
+
+    if (typeof renderTrackLyricsBox === 'function') {
+        const queueItem = currentQueueIndex >= 0 ? playbackQueue[currentQueueIndex] : null;
+        const currentSong = queueItem ? queueItem.song || queueItem : null;
+        if (currentSong && currentSong.id === songId) {
+            renderTrackLyricsBox();
+        }
     }
-    const { store, key, entry } = _getOrCreateEntry(songId);
-    const active = entry.variants.find((v) => v.id === entry.activeId) || entry.variants[0];
-    if (active) {
-        active.text = String(lrcText);
-        active.createdAt = Date.now();
-        store[key] = entry;
-        saveSyncedLyricsStore(store);
-        return active;
-    }
-    return addSyncedLyricsVariant(songId, lrcText, 0);
+
+    return result;
 }
 
 function setActiveSyncedLyricsVariant(songId, variantId) {
@@ -228,6 +248,14 @@ function clearSyncedLyricsForSong(songId) {
     delete store[key];
     if (String(songId) !== key) delete store[songId];
     saveSyncedLyricsStore(store);
+
+    if (typeof renderTrackLyricsBox === 'function') {
+        const queueItem = currentQueueIndex >= 0 ? playbackQueue[currentQueueIndex] : null;
+        const currentSong = queueItem ? queueItem.song || queueItem : null;
+        if (currentSong && currentSong.id === songId) {
+            renderTrackLyricsBox();
+        }
+    }
 }
 
 // ==============================================================================

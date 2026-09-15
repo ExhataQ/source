@@ -506,13 +506,17 @@ if (window.electronAPI && window.electronAPI.onWindowMaximize) {
         maximizeIconDebounce = setTimeout(() => {
             maximizeIconDebounce = null;
             isWindowMaximized = isMax;
-            updateMaximizeIcon(isMax);
+            if (typeof updateMaximizeIcon === 'function') {
+                updateMaximizeIcon(isMax);
+            }
         }, 80);
     });
     if (window.electronAPI.getWindowMaximized) {
         window.electronAPI.getWindowMaximized().then((isMax) => {
             isWindowMaximized = isMax;
-            updateMaximizeIcon(isMax);
+            if (typeof updateMaximizeIcon === 'function') {
+                updateMaximizeIcon(isMax);
+            }
         });
     }
 }
@@ -630,6 +634,10 @@ audioElement.ontimeupdate = () => {
 
     if (currentView === 'lyrics' && syncedLyricsState.entries) {
         updateSyncedLyricsHighlight(audioElement.currentTime);
+    }
+
+    if (typeof updateTrackLyricsHighlight === 'function') {
+        updateTrackLyricsHighlight(audioElement.currentTime);
     }
 };
 

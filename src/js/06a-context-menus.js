@@ -5,6 +5,7 @@ let activeContextMenu = null;
 let activeContextMenuSlot = null;
 let currentContextSongId = null;
 let currentContextPlaylistId = null;
+let contextMenuMouseDownOutside = false;
 
 const CONTEXT_MENU_TYPE_LABELS = {
     playlist: 'Playlist',
@@ -381,6 +382,7 @@ function closeContextMenu() {
         currentContextSongId = null;
         currentContextPlaylistId = null;
     }
+    contextMenuMouseDownOutside = false;
 }
 
 // ==============================================================================
@@ -880,9 +882,19 @@ document.addEventListener('keydown', function (e) {
     }
 });
 
+document.addEventListener('mousedown', function (event) {
+    if (!activeContextMenu) return;
+    const inside = !!event.target.closest('.context-menu');
+    const onMoreInfo = !!event.target.closest('.more-info');
+    contextMenuMouseDownOutside = !inside && !onMoreInfo;
+});
+
 document.addEventListener('click', function (event) {
     if (!event.target.closest('.more-info') && !event.target.closest('.context-menu')) {
-        closeContextMenu();
+        if (contextMenuMouseDownOutside) {
+            closeContextMenu();
+        }
+        contextMenuMouseDownOutside = false;
     }
     if (typeof selectedSongIds !== 'undefined' && selectedSongIds.size > 0) {
         const insideSongItem = event.target.closest('#song-list .song-item');

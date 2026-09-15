@@ -375,3 +375,348 @@ styles.css
 
 styles.css
 - Collapsed result cards show a pointer cursor; expanded cards do not
+
+2026-09-15
+19-online-lyrics.js
+- Replaced the artist / title / album inputs with a single query input prefilled with title and artist
+- searchOnlineLyrics now sends a single query string to the main process
+- Dropped duration parsing and formatting helpers; removed the duration column from each result
+- Removed the em dash fallback for missing album names
+
+online-lyrics.js
+- searchLyrics now always uses /api/search with a single q parameter
+- Removed exact-match lookup and duration handling
+
+styles.css
+- Result grid is now title, artist, album, chevron
+- Removed duration column styling
+- Responsive override collapses to title plus chevron
+
+2026-09-15
+19-online-lyrics.js
+- Reverted the single query input back to separate artist / title / album inputs
+- Restored duration parsing and the duration column in results
+- Restored the em dash fallback for missing album names
+
+online-lyrics.js
+- Restored the /api/get exact-match lookup and duration handling
+
+styles.css
+- Restored the duration column in the result grid
+- Restored the responsive override
+
+2026-09-15
+19-online-lyrics.js
+- Added originalQuery, pickerOpen, pickerQuery, pickerIndex and pickerType to state
+- Stored the initial title/artist/album from the playing song when the view opens
+- Added hasOnlineLyricsQueryChanged helper
+- Split useOnlineLyrics into useOnlineLyrics and applyOnlineLyricsToSong
+- Added openOnlineLyricsPicker, closeOnlineLyricsPicker, renderOnlineLyricsPicker, updateOnlineLyricsPickerList, getOnlineLyricsPickerSongs, chooseOnlineLyricsSong, handleOnlineLyricsPickerInput, onlineLyricsPickerKeyHandler
+- Result card primary action now reads Save LRC to a song / Save Lyrics to a song when opened from the header, and Use LRC for this song / Use Lyrics for this song when opened from the lyrics view and the search query has changed
+
+styles.css
+- Added picker overlay and modal styles for the song picker
+
+2026-09-15
+19-online-lyrics.js
+- Reworked the online lyrics song picker to open as a context-menu-style floating popup anchored to the clicked button instead of a full-screen modal overlay
+- Added onlineLyricsPickerOutsideHandler for click-outside dismissal and updated closeOnlineLyricsPicker to clean up the document listener
+- Rewrote getOnlineLyricsPickerSongs with token-aware matching: separators like -, en dash, em dash, comma, by, feat, ft and with are ignored; all query tokens must appear somewhere in title/artist/album; results are scored by whether tokens hit the title or artist, and sorted by score
+
+styles.css
+- Replaced the picker modal and overlay styles with .online-lyrics-picker floating popup styles
+
+2026-09-15
+19-online-lyrics.js
+- openOnlineLyricsPicker now builds the picker inline using the same positioning logic as the app's context menu system: hidden measure, flip horizontally when overflowing right, flip vertically when overflowing bottom, clamp to 7px margins, active class applied after 10ms
+- renderOnlineLyricsPicker now delegates to openOnlineLyricsPicker
+- Added a window resize listener that repositions the open picker the same way the context menu does
+
+styles.css
+- .online-lyrics-picker now layers on top of .context-menu styling with a fixed 340px width, flex column layout, and an .active override so the flex layout persists when the menu is shown
+
+2026-09-15
+19-online-lyrics.js
+- Restored getOnlineLyricsPickerSongs that was lost during the picker rewrite; it was causing updateOnlineLyricsPickerList to throw and preventing the outside-click handler from being registered
+
+2026-09-15
+19-online-lyrics.js
+- Added pickerSelectedSongId to online lyrics state and reset it on open
+- openOnlineLyricsPicker now builds a footer with Cancel and Save to song buttons, calls updateScrollbarById after the initial list render, and switches the outside-click dismissal to capture-phase click instead of mousedown
+- closeOnlineLyricsPicker now also clears pickerSelectedSongId and removes the click-phase outside handler
+- chooseOnlineLyricsSong replaced by selectOnlineLyricsPickerSong plus confirmOnlineLyricsPicker; clicking a row marks it selected instead of applying, and confirmOnlineLyricsPicker applies the lyrics to the selected song
+- Added updateOnlineLyricsPickerConfirmButton to enable the Save to song button only when a row is selected
+
+styles.css
+- Added picker footer and selected-row styling
+- Added padding to the picker list content wrapper and gave the list container flex sizing so the custom scrollbar can render properly
+
+2026-09-15
+styles.css
+- Gave the online lyrics picker's list container a bounded flex height (flex 1 1 0 plus height 0) so the custom scrollbar has overflow to detect and can actually scroll
+- Made .online-lyrics-picker.active a proper flex column with hidden overflow
+- Anchored the picker footer to the bottom with flex 0 0 auto and margin-top auto
+- Changed the picker search bar to flex 0 0 auto so it never squishes
+
+2026-09-15
+styles.css
+- Removed the height 0 clamp on the online lyrics picker list container; it was collapsing the visible content area to zero while leaving the scrollbar thumb visible
+- The picker now relies on flex 1 1 auto plus min-height 0 so the inner scroll area gets a real height
+- Set box-sizing border-box on the picker root
+- Made the picker's queue list a plain block so it doesn't fight the scroll wrapper
+
+2026-09-15
+19-online-lyrics.js
+- openOnlineLyricsSearchView now defaults song to null; only the lyrics view passes the currently playing song, so opening from the header no longer assumes fromHeader false when a song is playing
+- Added clearOnlineLyricsSearchInputs to reset the three search inputs and clear results
+- Added a Clear button to the online lyrics search panel
+
+styles.css
+- The online lyrics search panel grid now has five columns to fit the new Clear button
+
+2026-09-15
+19-online-lyrics.js
+- The online lyrics picker no longer uses the context-menu class; it has its own root class, sets display flex inline, and no longer fights the .context-menu.active rule for display
+
+styles.css
+- The online lyrics picker now has its own background, radius, shadow and a fixed position so it no longer needs the .context-menu class
+- Removed the obsolete .online-lyrics-picker.active override
+
+2026-09-15
+19-online-lyrics.js
+- Added onlineLyricsPickerMouseDownOutside and onlineLyricsPickerMouseDownHandler so the picker only closes when both the mousedown and the click happened outside the picker
+- closeOnlineLyricsPicker now removes the mousedown handler and resets the outside flag
+
+06a-context-menus.js
+- Added contextMenuMouseDownOutside tracking so the global context menu only closes when the mousedown also landed outside the menu
+- closeContextMenu resets the flag
+
+styles.css
+- Picker rows now use the context menu hover overlay colour for stronger contrast
+
+2026-09-15
+styles.css
+- Picker row selection now sits above the hover effect and uses a brighter white overlay
+- Selected picker rows show white title and artist text to match the main song list
+
+2026-09-15
+styles.css
+- Raised the online lyrics picker to z-index 100080 so it floats above the sync editor, extended info panel, image viewer, and online lyrics view
+- Raised the context menu to z-index 100050 and its submenus to 100060 so both menus sit above the same surfaces
+
+2026-09-15
+19-online-lyrics.js
+- Removed the duplicate picker state assignment in openOnlineLyricsPicker
+- Removed the unused renderOnlineLyricsPicker delegate
+- Removed the unused getOnlineLyricsCurrentResult
+- Declared onlineLyricsPickerMouseDownOutside at module scope
+- Added searched: false to the fresh state object for clarity
+
+2026-09-15
+08-panels.js
+- toggleSettingsPanel now tears down the lyrics view when the current view is online-lyrics as well as lyrics
+
+2026-09-15
+08-panels.js
+- Added showCurrentSourceContextMenu; right-clicking the right-panel header title in tags mode now opens that list's own context menu (All Songs, Liked Songs, Recents, playlist, album, or artist)
+- updateRightPanelHeader now sets or clears the oncontextmenu attribute on the header title depending on the active tab
+- updateAlbumArt keeps the oncontextmenu binding in sync when the tags tab is active and the source name changes
+
+2026-09-15
+music_player.html
+- Replaced the tags content layout: album art stays, followed by a track-info header (large clickable title + info button, clickable artist below) and a single labeled-rows box for Album, Year, Genre, Duration, Track, Composer
+
+08-panels.js
+- updateAlbumArt now writes plain text into the new tag elements; removed the tag-track-row visibility toggle since the row is always shown
+- The empty-state branch resets all fields to an em dash
+
+styles.css
+- Replaced the old tag-tile and tag-grid styles with the new track-info header, title, artist, box, and row styles
+- Added display flex to track-info-btn
+
+2026-09-15
+styles.css
+- Removed the divider between track-info rows
+- Increased row padding to 14px
+- Added .track-info-box-title style
+
+music_player.html
+- Added an Info title inside the track-info box
+
+2026-09-15
+music_player.html
+- Track info rows now render value first, label second so the label sits below the value
+
+08-panels.js
+- updateAlbumArt binds oncontextmenu on the tag title and artist to open the song context menu, and clears those handlers when no song is playing
+
+styles.css
+- Track info values are larger and bolder, rows are right aligned with the label below the value
+- Info box title is larger and brighter
+
+2026-09-15
+08-panels.js
+- updateAlbumArt writes empty strings for missing tag values and calls updateTrackInfoBoxVisibility
+- Added updateTrackInfoBoxVisibility to hide empty info rows and collapse the whole info box when no rows have values
+
+styles.css
+- Info rows are now left aligned
+
+2026-09-15
+08-panels.js
+- When no song is playing, the track info header block is hidden entirely and tag values are cleared instead of showing em dashes
+- updateAlbumArt restores the header when a song is loaded
+
+styles.css
+- Info rows use tighter vertical padding and gap
+- Larger gap between the header block and the info box
+
+2026-09-15
+styles.css
+- Info box title is now 100% white and 800 weight
+- Value rows are 95% white and 600 weight
+- Labels are less white (70%) and 500 weight
+
+2026-09-15
+styles.css
+- Track info box background now uses the same --bg-modal colour as the context menu
+
+2026-09-15
+music_player.html
+- Added a Next in queue box below the info box in the right panel tags view, with an Open queue button and a track-next-body container
+
+08-panels.js
+- Added updateTrackNextBox to populate the next-in-queue item or hide the box when there is no next song
+- updateAlbumArt calls updateTrackNextBox in both the populated and empty branches
+
+10-playback.js
+- updateQueueDisplay calls updateTrackNextBox so the box updates when the queue changes
+
+styles.css
+- Styled the next-in-queue box, its header, the Open queue button, and the song item to match the info box
+
+2026-09-15
+08-panels.js
+- updateTrackNextBox now wires the row and cover play button to playFromQueue for the next index
+
+styles.css
+- Added hover background, cover overlay, and hidden-until-hover play button to the next-in-queue item, mirroring the left panel rows
+- Matched the title and artist padding to the queue-item styles for visual consistency
+
+2026-09-15
+styles.css
+- Open queue button is now underlined
+- Next-in-queue box background switched to --bg-hover
+- Next-in-queue row hover uses a light white overlay so it stands out against the box background without matching the picker selection level
+
+2026-09-15
+styles.css
+- Next-in-queue row hover overlay reduced to 5% white2026-09-15
+music_player.html
+- Info box rows split into two columns: Album / Year / Composer on the left, Genre / Duration / Track on the right
+
+08-panels.js
+- updateTrackInfoBoxVisibility now also hides a column when all of its rows are hidden
+
+styles.css
+- Added track-info-columns grid and track-info-column wrapper styles
+
+2026-09-15
+music_player.html
+- Info box rows are now a single flat grid of rows driven by data-layout; removed the two hardcoded columns
+
+08-panels.js
+- updateTrackInfoBoxVisibility now toggles data-layout to single or double based on how many rows have values (5+ rows uses two columns)
+
+styles.css
+- track-info-columns uses CSS grid with data-layout to switch between 1 and 2 columns
+- Removed the track-info-column wrapper style
+
+2026-09-15
+08-panels.js
+- updateTrackInfoBoxVisibility now uses three layouts: two-side for exactly 2 items, double for 5 or 6 items, single otherwise
+
+styles.css
+- Added track-info-columns[data-layout='two-side'] for two items side by side in one row
+
+2026-09-15
+08-panels.js
+- updateRightPanelHeader now guards against missing header title and recently-played-text elements, fixing a null textContent error during startup
+- Removed the duplicated focusSubheroSearch, clearSubheroSearch, handleSubheroSearchBlur, performSubheroSearch, focusLeftPanelSearch, clearLeftPanelSearch, handleLeftPanelSearchBlur, and performLeftPanelSearch blocks at the bottom of the file
+
+2026-09-15
+08-panels.js
+- updateTrackInfoBoxVisibility now uses four-grid layout for exactly 4 visible items
+
+styles.css
+- Added track-info-columns[data-layout='four-grid'] for 2 columns by 2 rows
+
+2026-09-15
+music_player.html
+- Added a compact lyrics box between the Info box and the Next in queue box in the right panel tags tab, with a header (title and Open button), a scrollable body with custom scrollbar, and a footer containing a Sync button and an expand chevron
+
+08-panels.js
+- Added renderTrackLyricsBox, applyTrackLyricsExpandedState, toggleTrackLyricsExpand, updateTrackLyricsHighlight, seekTrackLyricsToLine, scrollTrackLyricsToActive, attachTrackLyricsScrollWatcher, showTrackLyricsSyncButton, hideTrackLyricsSyncButton, clearTrackLyricsBox, and getTrackLyricsForCurrentSong
+- updateAlbumArt now calls renderTrackLyricsBox when a song plays and clearTrackLyricsBox when nothing plays
+
+15-playback-controls.js
+- audioElement.ontimeupdate now also calls updateTrackLyricsHighlight if available
+
+styles.css
+- Added compact lyrics box styles with collapsed and expanded heights, custom scrollbar, active-line styling, and the Sync and expand buttons
+
+2026-09-15
+styles.css
+- Compact lyrics box collapsed height set to 58px (about 2 lines) and expanded height to 240px (about 10 to 12 lines)
+- The lyrics scroll content now fills its container so the collapse actually clips the text
+- Synced lyrics lines on hover are larger, underlined, and use 92% white instead of full white
+
+2026-09-15
+styles.css
+- Compact lyrics text is now 15px and 92% white by default
+- Synced inactive lines are 72% opacity instead of 55%
+- Removed the hover font-size change; hover only underlines and brightens to 98% white
+
+2026-09-15
+08-panels.js
+- Added trackLyricsUserScrolledAway flag; updateTrackLyricsHighlight now auto-scrolls to the active line when the user hasn't scrolled away
+- scrollTrackLyricsToActive accepts a silent flag so auto-scroll doesn't dismiss the Sync button
+- The scroll watcher sets or clears the scrolled-away flag and toggles the Sync button accordingly
+- Reset the scrolled-away flag when a new song loads and when the box is cleared
+
+styles.css
+- Sync button is larger and centered in the footer; the expand chevron is absolutely positioned to the right
+
+2026-09-15
+styles.css
+- Sync button is now absolutely positioned at the horizontal center, 44px above the bottom of the lyrics box, with a soft shadow
+- Expand chevron is right-aligned via the footer flex
+- Compact lyrics text bumped to 18px
+
+2026-09-15
+styles.css
+- Lyrics line-height dropped to 1.2 so wrapped continuations group tightly with their lyric line
+- Row margin between separate lyric lines raised to 8px to keep distinct lines separated
+
+2026-09-15
+18-lyrics-editor.js
+- setLyricsForSong, setSyncedLyricsForSong, and clearSyncedLyricsForSong now call renderTrackLyricsBox when the edited song is the currently playing one
+
+08-panels.js
+- renderTrackLyricsBox resets the scroll position to the top on re-render
+- Added attachTrackLyricsWheelGuard so the wheel event stops propagating to the right panel when the lyrics box is at its top or bottom
+- deleteSavedLyricsEntry now also refreshes the compact lyrics box when the deleted lyrics belonged to the playing song
+
+2026-09-15
+08-panels.js
+- attachTrackLyricsWheelGuard now uses passive: false and calls preventDefault in addition to stopPropagation, so overscrolling the lyrics box no longer scrolls the right panel
+
+2026-09-15
+08-panels.js
+- Added getHideRightPanelLyrics, setHideRightPanelLyrics, and toggleHideRightPanelLyrics backed by the hideRightPanelLyrics localStorage key
+- openSettingsPanel now syncs the new checkbox with the stored value
+- renderTrackLyricsBox now hides the box entirely when the setting is enabled
+- Settings panel now shows a Right Panel section below Theme Color with a Remove right panel lyrics checkbox
+
+styles.css
+- Added .settings-toggle-row for checkbox rows

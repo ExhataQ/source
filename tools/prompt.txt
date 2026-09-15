@@ -77,7 +77,7 @@ App/MusicPlayerOutput/
 ├── css/
 │   └── styles.css
 ├── js/
-│   └── 00-state.js … 18-lyrics-editor.js
+│   └── 00-state.js … 19-online-lyrics.js
 ├── fonts/
 │   └── (all.min.css, material-icons.css, 4 woff2 files)
 └── covers/
@@ -145,7 +145,8 @@ icon.png — app icon, copied to App/icon.png.
 
 Source/src/css/ contains:
 
-styles.css — Complete application stylesheet.
+music-folders.js — Music-folder configuration reading/writing plus pure folder validation/removal/song-count helpers. Path comparison uses Windows normalization; song counts require the song path to be inside the folder rather than merely sharing a string prefix.
+online-lyrics.js — LRCLIB API client for the Electron main process. Builds exact-match (/api/get) and broad-search (/api/search) requests, retries transient HTTP errors with backoff, de-duplicates the exact match out of the search results, and returns { exact, results }. Provides downloadLyricsFile for saving LRC or plain lyrics into the configured download folder with collision-safe filenames. Exposes searchLyrics and downloadLyricsFile.
 
 Source/src/js/ contains (loaded in numeric order):
 
@@ -193,7 +194,7 @@ Source/src/js/ contains (loaded in numeric order):
 
 18-lyrics-editor.js — Lyrics storage and editor: custom lyrics store (getCustomLyricsStore, saveCustomLyricsStore, getLyricsForSong, setLyricsForSong); synced lyrics variant system (getSyncedLyricsStore, saveSyncedLyricsStore, _migrateEntry, getSyncedLyricsVariantsForSong, getActiveSyncedLyricsForSong, getSyncedLyricsForSong, _getOrCreateEntry, addSyncedLyricsVariant, setSyncedLyricsForSong, setActiveSyncedLyricsVariant, renameSyncedLyricsVariant, deleteSyncedLyricsVariant, clearSyncedLyricsForSong); lyrics editor modal (openLyricsEditor, openLyricsEditorForSong, saveLyricsForSong, clearLyricsForSong, closeLyricsEditor, lyricsEditorKeyHandler, saveLyricsFromEditor, clearLyricsForCurrentSong); variant UI (selectSyncedVariant, renameSyncedVariant, deleteSyncedVariant).
 
-19-online-lyrics.js — Online lyrics search and download via LRCLIB. Renderer-side view (currentView = 'online-lyrics'), search state (onlineLyricsState with fromHeader flag set when opened without a playing song and searched flag set once a search has been submitted), searchOnlineLyrics, selectOnlineLyricsResult, selectOnlineLyricsType, copyOnlineLyrics, downloadOnlineLyrics, useOnlineLyrics (writes to synced or plain lyrics for the current song), pagination helpers, renderOnlineLyricsResult (album shown in its own cell, duration right-aligned), renderOnlineLyricsView (Back to Lyrics button hidden when fromHeader is true; pre-search prompt shown until searched becomes true), openOnlineLyricsView, openOnlineLyricsSearchView.
+19-online-lyrics.js — Online lyrics search and download via LRCLIB. Renderer-side view (currentView = 'online-lyrics'), search state (onlineLyricsState with fromHeader flag set when opened without a playing song, searched flag set once a search has been submitted, originalQuery snapshot of the playing song's artist/title/album, and pickerOpen / pickerQuery / pickerIndex / pickerType for the song picker), searchOnlineLyrics, openOnlineLyricsResult, closeOnlineLyricsResult, selectOnlineLyricsType, copyOnlineLyrics, downloadOnlineLyrics, useOnlineLyrics (attaches to the currently playing song), applyOnlineLyricsToSong, hasOnlineLyricsQueryChanged, openOnlineLyricsPicker, closeOnlineLyricsPicker, renderOnlineLyricsPicker, updateOnlineLyricsPickerList, getOnlineLyricsPickerSongs, chooseOnlineLyricsSong, handleOnlineLyricsPickerInput, onlineLyricsPickerKeyHandler, pagination helpers, renderOnlineLyricsResult, renderOnlineLyricsView (rebuilds the header and search panel once; the results section renders via updateOnlineLyricsResultsSection so search ticks don't re-render the header; Back to Lyrics button hidden when fromHeader is true; pre-search prompt shown until searched becomes true), openOnlineLyricsView, openOnlineLyricsSearchView.
 
 99-player.js — Template with {{SONGS_DATA}} and {{PLACEHOLDER_IMAGE}}. Now reduced to the bootstrap and shared helpers: SONGS_DATA init, deletedSongIds Set, getActiveSongs, markSongAsDeleted, filterDeletedSongs, getActiveFavoritesCount, PLACEHOLDER_IMAGE (also aliased to window.PLACEHOLDER_IMAGE so inline HTML onerror/onload handlers can resolve it), escapeHtml, generateLongId, generateConsistentId, saveCurrentPlaybackState, left panel filter toggles (togglePlaylistsFilter, toggleAlbumsFilter, toggleArtistsFilter, deactivateAllFilterTags), shouldSaveToRecentlyPlayed, isBelowCollapseThreshold, left panel collapse (collapseLeftPanel, expandLeftPanel, toggleLeftPanelCollapse), importDroppedFiles, resize handler for collapse threshold, initPanelResize, initTracklistScrollEffect, DOMContentLoaded bootstrap, closeApp, minimizeApp, maximizeApp, updateMaximizeIcon, and player title/artist/cover/album-art bindings.
 
@@ -240,5 +241,8 @@ Online lyrics result behavior:
 - LRCLIB online search uses the exact /api/get result as the first result when available, then includes other /api/search matches after it, de-duplicated by LRCLIB id or matching track/artist/duration. Temporary HTTP/network failures are retried with short backoff delays; exact-match failure does not block the broader search. If artist/title/album fields are incomplete, the search uses LRCLIB's broad q query so a single populated field can still return results.
 - The Online Lyrics view displays 10 results per page with Previous/Next navigation. LRCLIB currently returns a maximum of 20 search results and does not support server-side pagination, so the renderer paginates the returned result set locally.
 - Pagination resets to page 1 whenever a new online lyrics search starts, and changing pages clears the expanded result selection.
+- A collapsed result card opens on any click inside the card; an expanded card can only be collapsed by clicking its chevron. Badge buttons (Synced LRC / Lyrics) switch the active type without collapsing the card.
+- The expanded card's primary action depends on how the view was opened. Opened from the header (fromHeader true): the button reads Save LRC to a song or Save Lyrics to a song and opens the song picker. Opened from the lyrics view (fromHeader false): the button only appears once the search fields have diverged from originalQuery, and reads Use LRC for this song or Use Lyrics for this song, attaching directly to the playing song.
+- The song picker is a modal overlay with a prefilled search input (LRCLIB track title plus artist name) and a scrollable list of getActiveSongs() filtered by title, artist, or album substring. Picking a song attaches the LRC or plain lyrics to it and closes the picker. The list uses the app's custom scrollbar.
 
 Online lyrics: The global header can open the online lyrics view before the regular Lyrics view has been visited, so the online lyrics renderer initializes its own lyrics-view-root when needed.

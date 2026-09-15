@@ -566,55 +566,77 @@
                                     <img id="album-art-image" class="album-art-image" src="{{PLACEHOLDER_IMAGE}}" alt="Album artwork" onerror="this.onerror=null; this.src='{{PLACEHOLDER_IMAGE}}'" />
                                 </div>
                                 <div class="tag-details" id="tag-details">
-                                    <div class="tag-tile tag-title-tile">
-                                        <div>
-                                            <div class="tag-label">Title</div>
-                                            <div class="tag-value tag-title-main" id="tag-title">—</div>
+                                    <div class="track-info-header">
+                                        <div class="track-info-title-row">
+                                            <div class="track-info-title" id="tag-title" onclick="navigateToCurrentSourceView()">—</div>
+                                            <button
+                                                class="track-info-btn"
+                                                id="track-info-btn"
+                                                onclick="event.stopPropagation(); openExtendedInfoPanel()"
+                                                style="display: none"
+                                                title="Track information"
+                                                aria-label="Track information"
+                                            >
+                                                !
+                                            </button>
                                         </div>
-                                        <button
-                                            class="track-info-btn"
-                                            id="track-info-btn"
-                                            onclick="event.stopPropagation(); openExtendedInfoPanel()"
-                                            style="display: none"
-                                            title="Track information"
-                                            aria-label="Track information"
-                                        >
-                                            !
-                                        </button>
+                                        <div class="track-info-artist" id="tag-artist" onclick="navigateToCurrentArtist()">—</div>
                                     </div>
-                                    <div class="tag-grid tag-grid-row2">
-                                        <div class="tag-tile">
-                                            <div class="tag-label">Album</div>
-                                            <div class="tag-value" id="tag-album">—</div>
-                                        </div>
-                                        <div class="tag-tile">
-                                            <div class="tag-label">Artist</div>
-                                            <div class="tag-value" id="tag-artist">—</div>
-                                        </div>
-                                        <div class="tag-tile" id="tag-track-row" style="display: none">
-                                            <div class="tag-label">Track</div>
-                                            <div class="tag-value" id="tag-track">—</div>
+                                    <div class="track-info-box" id="track-info-box">
+                                        <div class="track-info-box-title">Info</div>
+                                        <div class="track-info-columns" id="track-info-columns" data-layout="single">
+                                            <div class="track-info-row">
+                                                <span class="track-info-value" id="tag-album">—</span>
+                                                <span class="track-info-label">Album</span>
+                                            </div>
+                                            <div class="track-info-row">
+                                                <span class="track-info-value" id="tag-year">—</span>
+                                                <span class="track-info-label">Year</span>
+                                            </div>
+                                            <div class="track-info-row">
+                                                <span class="track-info-value" id="tag-composer">—</span>
+                                                <span class="track-info-label">Composer</span>
+                                            </div>
+                                            <div class="track-info-row">
+                                                <span class="track-info-value" id="tag-genre">—</span>
+                                                <span class="track-info-label">Genre</span>
+                                            </div>
+                                            <div class="track-info-row">
+                                                <span class="track-info-value" id="tag-duration">—</span>
+                                                <span class="track-info-label">Duration</span>
+                                            </div>
+                                            <div class="track-info-row">
+                                                <span class="track-info-value" id="tag-track">—</span>
+                                                <span class="track-info-label">Track</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <div class="tag-grid tag-grid-row3">
-                                        <div class="tag-tile">
-                                            <div class="tag-label">Year</div>
-                                            <div class="tag-value" id="tag-year">—</div>
+                                    <div class="track-lyrics-box" id="track-lyrics-box" style="display: none">
+                                        <div class="track-lyrics-header">
+                                            <span class="track-lyrics-title">Lyrics</span>
+                                            <button class="track-lyrics-open" onclick="switchToLyrics()">Open</button>
                                         </div>
-                                        <div class="tag-tile">
-                                            <div class="tag-label">Genre</div>
-                                            <div class="tag-value" id="tag-genre">—</div>
+                                        <div class="custom-scrollbar-container track-lyrics-body-container">
+                                            <div class="custom-scrollbar-content" id="track-lyrics-body">
+                                                <div class="track-lyrics-text" id="track-lyrics-text"></div>
+                                            </div>
+                                            <div class="custom-scrollbar" id="track-lyrics-scrollbar">
+                                                <div class="custom-scrollbar-thumb" id="track-lyrics-scrollbar-thumb"></div>
+                                            </div>
                                         </div>
-                                        <div class="tag-tile">
-                                            <div class="tag-label">Duration</div>
-                                            <div class="tag-value" id="tag-duration">—</div>
+                                        <div class="track-lyrics-footer">
+                                            <button class="track-lyrics-sync" id="track-lyrics-sync" onclick="scrollTrackLyricsToActive()" style="display: none">Sync</button>
+                                            <button class="track-lyrics-expand" id="track-lyrics-expand" onclick="toggleTrackLyricsExpand()" aria-label="Expand lyrics">
+                                                <span class="material-symbols-outlined" id="track-lyrics-expand-icon">expand_more</span>
+                                            </button>
                                         </div>
                                     </div>
-                                    <div class="tag-grid tag-grid-row4">
-                                        <div class="tag-tile">
-                                            <div class="tag-label">Composer</div>
-                                            <div class="tag-value" id="tag-composer">—</div>
+                                    <div class="track-next-box" id="track-next-box">
+                                        <div class="track-next-header">
+                                            <span class="track-next-title">Next in queue</span>
+                                            <button class="track-next-open" onclick="switchToQueuePanel()">Open queue</button>
                                         </div>
+                                        <div class="track-next-body" id="track-next-body"></div>
                                     </div>
                                 </div>
                             </div>

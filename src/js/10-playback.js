@@ -60,6 +60,10 @@ function resetShuffle() {
 function updateQueueDisplay() {
     const queueList = document.getElementById('queue-list');
 
+    if (typeof updateTrackNextBox === 'function') {
+        updateTrackNextBox();
+    }
+
     if (repeatFunctionalityActive && repeatMode === 2 && currentQueueIndex >= 0 && playbackQueue[currentQueueIndex]) {
         const currentSong = playbackQueue[currentQueueIndex];
         queueList.innerHTML = `
