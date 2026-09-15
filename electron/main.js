@@ -24,7 +24,8 @@ const {
 const { getDownloadFolder, saveDownloadFolder, resetDownloadFolder, download } = require('./downloads');
 const { saveLyricsFile, readLyricsFile } = require('./file-operations');
 const { searchLyrics, downloadLyricsFile } = require('./online-lyrics');
-const { getAudioMetadata, saveAudioMetadata } = require('./metadata-editor');
+const { getAudioMetadata, saveAudioMetadata, saveAudioCover } = require('./metadata-editor');
+const { searchOnlineMetadata, getOnlineMetadata } = require('./online-metadata');
 
 
 function updateDeployedSongMetadata(fileUrl, metadata) {
@@ -38,12 +39,38 @@ function updateDeployedSongMetadata(fileUrl, metadata) {
         const target = String(fileUrl || '').replace(/\\/g, '/');
         const song = songs.find((x) => String(x.url || '').replace(/\\/g, '/') === target);
         if (!song) return false;
-        const fields = ['title','artist','album','albumArtist','composer','genre','year','track','trackTotal','discNumber','discTotal','label','publisher','copyright','comment','conductor','remixer','sortTitle','sortArtist','sortAlbum','grouping','bpm','compilation','isrc','musicBrainzTrackId','musicBrainzAlbumId','musicBrainzArtistId','encodedBy'];
+        const fields = ['title','artist','album','albumArtist','composer','genre','year','track','trackTotal','discNumber','discTotal','label','publisher','copyright','comment','conductor','remixer','sortTitle','sortArtist','sortAlbum','sortComposer','grouping','description','bpm','compilation','mood','language','mediaKind','isrc','musicBrainzTrackId','musicBrainzAlbumId','musicBrainzOriginalAlbumId','musicBrainzReleaseGroupId','musicBrainzArtistId','encodedBy','producer','lyricist','writer'];
         fields.forEach((key) => { if (metadata[key] !== undefined) song[key] = metadata[key]; });
         fs.writeFileSync(playerJsPath, content.replace(match[1], JSON.stringify(songs)), 'utf-8');
         return true;
     } catch (e) { return false; }
 }
+
+ipcMain.handle('search-online-metadata', async (event, params) => {
+    try { return await searchOnlineMetadata(params || {}); }
+    catch (error) { return { success: false, error: error.message || 'Failed to search MusicBrainz' }; }
+});
+
+ipcMain.handle('get-online-metadata', async (event, params) => {
+    try { return await getOnlineMetadata(params || {}); }
+    catch (error) { return { success: false, error: error.message || 'Failed to fetch MusicBrainz metadata' }; }
+});
+
+ipcMain.handle('save-audio-cover', async (event, params) => {
+    try {
+        const result = await saveAudioCover(params?.fileUrl, params?.imagePath);
+        return result;
+    } catch (error) { return { success: false, error: error.message || 'Failed to save cover' }; }
+});
+
+ipcMain.handle('choose-cover-image', async () => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+        title: 'Choose cover image', properties: ['openFile'],
+        filters: [{ name: 'Images', extensions: ['jpg','jpeg','png','webp','gif'] }]
+    });
+    if (result.canceled || !result.filePaths?.[0]) return { success: false, canceled: true };
+    return { success: true, imagePath: result.filePaths[0] };
+});
 
 ipcMain.handle('get-audio-metadata', async (event, fileUrl) => {
     try { return await getAudioMetadata(fileUrl); }
@@ -52,7 +79,7 @@ ipcMain.handle('get-audio-metadata', async (event, fileUrl) => {
 
 ipcMain.handle('save-audio-metadata', async (event, params) => {
     try {
-        const result = await saveAudioMetadata(params?.fileUrl, params?.metadata || {});
+        const result = await saveAudioMetadata(params?.fileUrl, params?.metadata || {}, params?.coverPath || '');
         if (result.success) updateDeployedSongMetadata(params?.fileUrl, result.metadata || {});
         return result;
     } catch (error) { return { success: false, error: error.message || 'Failed to save metadata' }; }

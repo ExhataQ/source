@@ -1,4 +1,186 @@
 // ============================================================================
+// MULTI-SONG LYRICS FINDER
+// ============================================================================
+let smartLyricsFinderState = {
+    mode: 'lrc',
+    query: '',
+    selectedIds: new Set(),
+    processing: false,
+    currentIndex: -1,
+    results: new Map(),
+    status: ''
+};
+
+function openSmartLyricsFinder() {
+    smartLyricsFinderState = { mode: 'lrc', query: '', selectedIds: new Set(), processing: false, currentIndex: -1, results: new Map(), status: '' };
+    switchView('smart-lyrics');
+}
+
+function getSmartLyricsFinderSongs() {
+    const query = String(smartLyricsFinderState.query || '').toLowerCase().trim();
+    const songs = typeof SONGS_DATA !== 'undefined' ? SONGS_DATA : (typeof getActiveSongs === 'function' ? getActiveSongs() : []);
+    if (!query) return songs;
+    const tokens = query.split(/\s+/).filter(Boolean);
+    return songs.filter(song => {
+        const haystack = `${song.title || ''} ${song.artist || ''} ${song.album || ''}`.toLowerCase();
+        return tokens.every(token => haystack.includes(token));
+    });
+}
+
+function toggleSmartLyricsSong(songId) {
+    if (smartLyricsFinderState.processing) return;
+    if (smartLyricsFinderState.selectedIds.has(songId)) smartLyricsFinderState.selectedIds.delete(songId);
+    else smartLyricsFinderState.selectedIds.add(songId);
+    updateSmartLyricsFinderList();
+    updateSmartLyricsFinderSelectionCount();
+}
+
+function selectAllSmartLyricsSongs() {
+    if (smartLyricsFinderState.processing) return;
+    getSmartLyricsFinderSongs().forEach(song => smartLyricsFinderState.selectedIds.add(song.id));
+    updateSmartLyricsFinderList();
+    updateSmartLyricsFinderSelectionCount();
+}
+
+function clearSmartLyricsSelection() {
+    if (smartLyricsFinderState.processing) return;
+    smartLyricsFinderState.selectedIds.clear();
+    updateSmartLyricsFinderList();
+    updateSmartLyricsFinderSelectionCount();
+}
+
+function setSmartLyricsMode(mode) {
+    if (smartLyricsFinderState.processing) return;
+    smartLyricsFinderState.mode = mode === 'lyrics' ? 'lyrics' : 'lrc';
+    renderSmartLyricsFinder();
+}
+
+function handleSmartLyricsFinderSearch(value) {
+    smartLyricsFinderState.query = value || '';
+    updateSmartLyricsFinderList();
+    updateSmartLyricsFinderSelectionCount();
+}
+
+function updateSmartLyricsFinderSelectionCount() {
+    const el = document.getElementById('smart-lyrics-selection-count');
+    if (el) el.textContent = `${smartLyricsFinderState.selectedIds.size} selected`;
+}
+
+function updateSmartLyricsFinderProgress() {
+    const el = document.getElementById('smart-lyrics-progress');
+    if (el) el.textContent = smartLyricsFinderState.status || '';
+}
+
+function updateSmartLyricsFinderList() {
+    const list = document.getElementById('smart-lyrics-song-list');
+    if (!list) return;
+    const songs = getSmartLyricsFinderSongs();
+    if (!songs.length) {
+        list.innerHTML = '<div class="smart-lyrics-empty"><span class="material-symbols-outlined">search_off</span><span>No songs match</span></div>';
+        return;
+    }
+    list.innerHTML = songs.map(song => {
+        const selected = smartLyricsFinderState.selectedIds.has(song.id);
+        const result = smartLyricsFinderState.results.get(song.id);
+        const stateClass = result ? (result.success ? 'found' : 'failed') : '';
+        const stateText = result ? (result.success ? (result.type === 'lrc' ? 'LRC found' : 'Lyrics found') : 'Not found') : '';
+        return `<button class="smart-lyrics-song-row ${selected ? 'selected' : ''} ${stateClass}" onclick="toggleSmartLyricsSong(${song.id})" ${smartLyricsFinderState.processing ? 'disabled' : ''}>
+            <span class="smart-lyrics-checkbox material-symbols-outlined">${selected ? 'check_box' : 'check_box_outline_blank'}</span>
+            <span class="smart-lyrics-song-cover">${song.cover ? `<img src="${escapeOnlineLyricsAttribute(song.cover)}" alt="">` : '<span class="material-symbols-outlined">music_note</span>'}</span>
+            <span class="smart-lyrics-song-info"><strong>${escapeHtml(song.title || 'Unknown title')}</strong><small>${escapeHtml(song.artist || 'Unknown artist')}${song.album ? ` · ${escapeHtml(song.album)}` : ''}</small></span>
+            ${stateText ? `<span class="smart-lyrics-song-status">${escapeHtml(stateText)}</span>` : ''}
+        </button>`;
+    }).join('');
+}
+
+async function searchLyricsForSmartSong(song, mode) {
+    const result = await window.electronAPI.searchOnlineLyrics({
+        artist: String(song.artist || ''),
+        title: String(song.title || ''),
+        album: String(song.album || ''),
+        duration: parseSongDurationSeconds(song.duration)
+    });
+    if (!result || result.success === false) throw new Error((result && result.error) || 'Search failed');
+    const type = mode === 'lyrics' ? 'lyrics' : 'lrc';
+    const results = Array.isArray(result.results) ? result.results : [];
+    const match = results.find(item => String(type === 'lrc' ? item.syncedLyrics || '' : item.plainLyrics || '').trim());
+    if (!match) return { success: false, type, error: 'No matching lyrics found' };
+    const text = getOnlineLyricsText(match, type);
+    return { success: Boolean(applyOnlineLyricsToSong(song.id, text, type)), type, error: '' };
+}
+
+async function runSmartLyricsFinder(allSongs = false) {
+    if (smartLyricsFinderState.processing) return;
+    const songs = getSmartLyricsFinderSongs();
+    const targets = allSongs ? songs : songs.filter(song => smartLyricsFinderState.selectedIds.has(song.id));
+    if (!targets.length) {
+        showNotification(allSongs ? 'No songs found' : 'Select at least one song', 'warning', 2000);
+        return;
+    }
+    smartLyricsFinderState.processing = true;
+    smartLyricsFinderState.results.clear();
+    smartLyricsFinderState.currentIndex = 0;
+    smartLyricsFinderState.status = `Finding ${smartLyricsFinderState.mode === 'lrc' ? 'LRC' : 'lyrics'}…`;
+    renderSmartLyricsFinder();
+    let found = 0;
+    for (let i = 0; i < targets.length; i++) {
+        const song = targets[i];
+        smartLyricsFinderState.currentIndex = i;
+        smartLyricsFinderState.status = `Finding ${smartLyricsFinderState.mode === 'lrc' ? 'LRC' : 'lyrics'}: ${song.title || 'Unknown title'} (${i + 1}/${targets.length})`;
+        updateSmartLyricsFinderProgress();
+        try {
+            const result = await searchLyricsForSmartSong(song, smartLyricsFinderState.mode);
+            smartLyricsFinderState.results.set(song.id, result);
+            if (result.success) found++;
+        } catch (error) {
+            smartLyricsFinderState.results.set(song.id, { success: false, type: smartLyricsFinderState.mode, error: error.message || 'Search failed' });
+        }
+        updateSmartLyricsFinderList();
+    }
+    smartLyricsFinderState.processing = false;
+    smartLyricsFinderState.status = `Finished: ${found} of ${targets.length} songs found`;
+    smartLyricsFinderState.currentIndex = -1;
+    renderSmartLyricsFinder();
+}
+
+function renderSmartLyricsFinder() {
+    const mainContentInner = document.querySelector('.main-content-inner');
+    if (!mainContentInner) return;
+    let root = document.getElementById('lyrics-view-root');
+    if (!root) {
+        root = document.createElement('div');
+        root.id = 'lyrics-view-root';
+        root.className = 'lyrics-view-root';
+        mainContentInner.appendChild(root);
+    }
+    const songs = getSmartLyricsFinderSongs();
+    const selectedCount = smartLyricsFinderState.selectedIds.size;
+    root.style.display = 'block';
+    root.innerHTML = `<div class="online-lyrics-view-container smart-lyrics-finder-container">
+        <div class="online-lyrics-header">
+            <div><div class="online-lyrics-kicker">LYRICS TOOLS</div><h2>Multi-song lyrics finder</h2><p>Choose songs and automatically find and save synced LRC or plain lyrics.</p></div>
+            <button class="lyrics-view-edit-btn" onclick="switchView('lyrics')"><span class="material-symbols-outlined">arrow_back</span>Back to Lyrics</button>
+        </div>
+        <div class="smart-lyrics-toolbar">
+            <input class="smart-lyrics-search" placeholder="Search songs..." value="${escapeOnlineLyricsAttribute(smartLyricsFinderState.query)}" oninput="handleSmartLyricsFinderSearch(this.value)" ${smartLyricsFinderState.processing ? 'disabled' : ''}>
+            <div class="smart-lyrics-mode">
+                <button class="lyrics-view-edit-btn ${smartLyricsFinderState.mode === 'lrc' ? 'active' : ''}" onclick="setSmartLyricsMode('lrc')" ${smartLyricsFinderState.processing ? 'disabled' : ''}>Synced LRC</button>
+                <button class="lyrics-view-edit-btn ${smartLyricsFinderState.mode === 'lyrics' ? 'active' : ''}" onclick="setSmartLyricsMode('lyrics')" ${smartLyricsFinderState.processing ? 'disabled' : ''}>Plain lyrics</button>
+            </div>
+            <button class="lyrics-view-edit-btn" onclick="selectAllSmartLyricsSongs()" ${smartLyricsFinderState.processing ? 'disabled' : ''}>Select visible</button>
+            <button class="lyrics-view-edit-btn" onclick="clearSmartLyricsSelection()" ${smartLyricsFinderState.processing ? 'disabled' : ''}>Clear</button>
+        </div>
+        <div class="smart-lyrics-actions"><span id="smart-lyrics-selection-count">${selectedCount} selected</span><div>
+            <button class="lyrics-view-edit-btn lyrics-online-btn" onclick="runSmartLyricsFinder(false)" ${smartLyricsFinderState.processing || !selectedCount ? 'disabled' : ''}>Find for selected</button>
+            <button class="lyrics-view-edit-btn lyrics-online-btn" onclick="runSmartLyricsFinder(true)" ${smartLyricsFinderState.processing || !songs.length ? 'disabled' : ''}>Find for all songs</button>
+        </div></div>
+        <div id="smart-lyrics-progress" class="smart-lyrics-progress">${escapeHtml(smartLyricsFinderState.status || '')}</div>
+        <div class="smart-lyrics-list" id="smart-lyrics-song-list"></div>
+    </div>`;
+    updateSmartLyricsFinderList();
+}
+
+// ============================================================================
 // ONLINE LYRICS / LRCLIB
 // ============================================================================
 let onlineLyricsState = {

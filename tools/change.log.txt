@@ -752,3 +752,14 @@ src/css/styles.css
 src/js/20-metadata-editor.js
 - Fixed metadata loading so backend results no longer replace already-visible song metadata with empty values.
 - Apply loaded metadata directly to existing fields instead of rebuilding the editor, preventing the visible fields from being flushed during the async read.
+
+2026-09-15
+electron/metadata-editor.py
+- Fixed metadata saving for ID3 files by always constructing proper Mutagen Frame objects instead of assigning plain strings to ID3 tags.
+- Fixed text, multi-value, track/disc, comment, and TXXX metadata writes and added standard ID3 sort-frame handling.
+- Metadata imported from JSON and manually edited metadata now use the same corrected save path.
+
+2026-09-15
+electron/metadata-editor.py
+- Fixed ID3 detection to inspect the Mutagen tag object rather than the container audio object, so MP3 metadata writes use real ID3 Frame instances.
+- This fixes manual and imported metadata saves that previously failed with "not a frame instance" errors.

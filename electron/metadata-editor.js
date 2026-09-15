@@ -11,5 +11,6 @@ function runMetadataPython(request) {
 }
 function fileUrlToPath(fileUrl){if(!fileUrl)return ''; try{const u=new URL(fileUrl);let p=decodeURIComponent(u.pathname);if(process.platform==='win32'&&/^\/[A-Za-z]:/.test(p))p=p.slice(1);return p.replace(/\//g,path.sep);}catch(e){return String(fileUrl).replace(/^file:\/\//,'').replace(/\//g,path.sep);}}
 const getAudioMetadata=(fileUrl)=>runMetadataPython({action:'read',path:fileUrlToPath(fileUrl)});
-const saveAudioMetadata=(fileUrl,metadata)=>runMetadataPython({action:'save',path:fileUrlToPath(fileUrl),metadata});
-module.exports={getAudioMetadata,saveAudioMetadata};
+const saveAudioMetadata=(fileUrl,metadata,coverPath='')=>runMetadataPython({action:'save',path:fileUrlToPath(fileUrl),metadata,coverPath});
+const saveAudioCover=(fileUrl,imagePath)=>runMetadataPython({action:'cover',path:fileUrlToPath(fileUrl),imagePath});
+module.exports={getAudioMetadata,saveAudioMetadata,saveAudioCover};

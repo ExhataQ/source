@@ -260,3 +260,4 @@ Metadata editor:
 - Metadata import/export uses ordinary .json files; the JSON payload remains versioned but the filename extension is standard JSON.
 
 - Metadata editor loads initial song metadata immediately and supplements it asynchronously from the audio file without clearing non-empty values or rebuilding the form.
+- `electron/metadata-editor.py` detects ID3 through the loaded tag object (`audio.tags`) and writes MP3 fields as proper Mutagen ID3 Frame instances; non-ID3 formats use their native tag mapping.
