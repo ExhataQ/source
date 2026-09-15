@@ -24,7 +24,73 @@ const {
 const { getDownloadFolder, saveDownloadFolder, resetDownloadFolder, download } = require('./downloads');
 const { saveLyricsFile, readLyricsFile } = require('./file-operations');
 const { searchLyrics, downloadLyricsFile } = require('./online-lyrics');
+const { getAudioMetadata, saveAudioMetadata } = require('./metadata-editor');
 
+
+function updateDeployedSongMetadata(fileUrl, metadata) {
+    const playerJsPath = path.join(__dirname, 'MusicPlayerOutput', 'player.js');
+    try {
+        if (!fs.existsSync(playerJsPath)) return false;
+        const content = fs.readFileSync(playerJsPath, 'utf-8');
+        const match = content.match(/const SONGS_DATA = (\[.*?\]);/s);
+        if (!match) return false;
+        const songs = JSON.parse(match[1]);
+        const target = String(fileUrl || '').replace(/\\/g, '/');
+        const song = songs.find((x) => String(x.url || '').replace(/\\/g, '/') === target);
+        if (!song) return false;
+        const fields = ['title','artist','album','albumArtist','composer','genre','year','track','trackTotal','discNumber','discTotal','label','publisher','copyright','comment','conductor','remixer','sortTitle','sortArtist','sortAlbum','grouping','bpm','compilation','isrc','musicBrainzTrackId','musicBrainzAlbumId','musicBrainzArtistId','encodedBy'];
+        fields.forEach((key) => { if (metadata[key] !== undefined) song[key] = metadata[key]; });
+        fs.writeFileSync(playerJsPath, content.replace(match[1], JSON.stringify(songs)), 'utf-8');
+        return true;
+    } catch (e) { return false; }
+}
+
+ipcMain.handle('get-audio-metadata', async (event, fileUrl) => {
+    try { return await getAudioMetadata(fileUrl); }
+    catch (error) { return { success: false, error: error.message || 'Failed to read metadata' }; }
+});
+
+ipcMain.handle('save-audio-metadata', async (event, params) => {
+    try {
+        const result = await saveAudioMetadata(params?.fileUrl, params?.metadata || {});
+        if (result.success) updateDeployedSongMetadata(params?.fileUrl, result.metadata || {});
+        return result;
+    } catch (error) { return { success: false, error: error.message || 'Failed to save metadata' }; }
+});
+
+ipcMain.handle('export-audio-metadata-json', async (event, params) => {
+    try {
+        const fileUrl = params?.fileUrl;
+        const metadata = params?.metadata || {};
+        const fileName = path.basename(fileUrl ? decodeURIComponent(new URL(fileUrl).pathname) : 'metadata');
+        const defaultName = `${path.parse(fileName).name || 'metadata'}.json`;
+        const result = await dialog.showSaveDialog(mainWindow, {
+            title: 'Export metadata',
+            defaultPath: defaultName,
+            filters: [{ name: 'JSON files', extensions: ['json'] }]
+        });
+        if (result.canceled || !result.filePath) return { success: false, canceled: true };
+        const payload = { schema: 'exhataq-metadata', version: 1, sourceFile: fileName, metadata };
+        fs.writeFileSync(result.filePath, JSON.stringify(payload, null, 2), 'utf-8');
+        return { success: true, filePath: result.filePath };
+    } catch (error) { return { success: false, error: error.message || 'Failed to export metadata' }; }
+});
+
+ipcMain.handle('import-audio-metadata-json', async () => {
+    try {
+        const result = await dialog.showOpenDialog(mainWindow, {
+            title: 'Import metadata',
+            properties: ['openFile'],
+            filters: [{ name: 'JSON files', extensions: ['json'] }]
+        });
+        if (result.canceled || !result.filePaths?.[0]) return { success: false, canceled: true };
+        const content = fs.readFileSync(result.filePaths[0], 'utf-8');
+        const payload = JSON.parse(content);
+        const metadata = payload?.metadata && typeof payload.metadata === 'object' ? payload.metadata : payload;
+        if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) throw new Error('Invalid metadata JSON file');
+        return { success: true, metadata, filePath: result.filePaths[0] };
+    } catch (error) { return { success: false, error: error.message || 'Failed to import metadata' }; }
+});
 
 ipcMain.handle('import-dropped-files', async (event, filePaths, targetView) => {
     const outputDir = path.join(__dirname, 'MusicPlayerOutput');

@@ -720,3 +720,35 @@ styles.css
 
 styles.css
 - Added .settings-toggle-row for checkbox rows
+2026-09-15
+- Added right-panel Metadata editor view opened from the edit button beside the Info title.
+- Added Electron IPC and Python/mutagen backend for reading and writing common audio metadata.
+- Metadata edits are written to the audio file and mirrored into the deployed SONGS_DATA database.
+- Added metadata editor renderer, styling, and build packaging.
+
+2026-09-15
+electron/main.js
+electron/preload.js
+src/js/20-metadata-editor.js
+src/css/styles.css
+build/music_player.py
+- Added ExhataQ JSON metadata import/export for the Metadata Editor.
+- Export writes the current editor values to a versioned .exhataq.json file.
+- Import accepts ExhataQ metadata JSON and populates the editor for review before saving.
+- JSON metadata can be applied to any supported destination audio format because the existing mutagen writer selects the destination format automatically.
+- Added compact Import and Export controls to the right-panel Metadata toolbar.
+
+2026-09-15
+src/js/20-metadata-editor.js
+electron/main.js
+src/css/styles.css
+- Metadata editor now immediately displays the metadata already present in the selected song instead of showing a loading message.
+- Existing scanner field aliases such as titleSort, artistSort, albumSort, and encoder are mapped into the editor.
+- If direct audio metadata reading fails, the editor keeps the existing song metadata visible instead of replacing the view with an empty/error state.
+- Metadata editor loading state was removed so the panel remains a plain background until the editor content is ready.
+- JSON metadata export now uses ordinary .json filenames and the import/export dialogs use the standard JSON file label.
+
+2026-09-15
+src/js/20-metadata-editor.js
+- Fixed metadata loading so backend results no longer replace already-visible song metadata with empty values.
+- Apply loaded metadata directly to existing fields instead of rebuilding the editor, preventing the visible fields from being flushed during the async read.

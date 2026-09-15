@@ -569,21 +569,11 @@
                                     <div class="track-info-header">
                                         <div class="track-info-title-row">
                                             <div class="track-info-title" id="tag-title" onclick="navigateToCurrentSourceView()">—</div>
-                                            <button
-                                                class="track-info-btn"
-                                                id="track-info-btn"
-                                                onclick="event.stopPropagation(); openExtendedInfoPanel()"
-                                                style="display: none"
-                                                title="Track information"
-                                                aria-label="Track information"
-                                            >
-                                                !
-                                            </button>
                                         </div>
                                         <div class="track-info-artist" id="tag-artist" onclick="navigateToCurrentArtist()">—</div>
                                     </div>
                                     <div class="track-info-box" id="track-info-box">
-                                        <div class="track-info-box-title">Info</div>
+                                        <div class="track-info-box-title"><span>Info</span><button class="track-info-edit-btn" id="track-info-btn" onclick="event.stopPropagation(); openMetadataEditor()" style="display: none" title="Edit metadata" aria-label="Edit metadata"><span class="material-symbols-outlined">edit</span></button></div>
                                         <div class="track-info-columns" id="track-info-columns" data-layout="single">
                                             <div class="track-info-row">
                                                 <span class="track-info-value" id="tag-album">—</span>
@@ -641,6 +631,8 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="panel-content" id="metadata-content"><div id="metadata-editor-content" class="metadata-editor-content"></div></div>
 
                         <div class="panel-content" id="recently-played-content">
                             <div class="queue-list" id="recently-played-list">
@@ -781,6 +773,7 @@
         <script src="js/17-song-selection.js"></script>
         <script src="js/18-lyrics-editor.js"></script>
         <script src="js/19-online-lyrics.js"></script>
+        <script src="js/20-metadata-editor.js"></script>
         <script src="player.js"></script>
     </body>
 </html>

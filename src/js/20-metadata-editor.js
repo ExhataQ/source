@@ -1,0 +1,36 @@
+let metadataEditorSongUrl=null, metadataEditorDirty=false;
+const ME_SECTIONS=[
+ ['Basic',['title','Title'],['artist','Artist'],['album','Album'],['albumArtist','Album Artist'],['composer','Composer'],['genre','Genre'],['year','Year']],
+ ['Structure',['track','Track Number'],['trackTotal','Track Total'],['discNumber','Disc Number'],['discTotal','Disc Total']],
+ ['Credits',['conductor','Conductor'],['remixer','Remixer'],['label','Label'],['publisher','Publisher'],['encodedBy','Encoded By']],
+ ['Additional',['copyright','Copyright'],['comment','Comment'],['grouping','Grouping'],['bpm','BPM'],['compilation','Compilation']],
+ ['Sorting',['sortTitle','Sort Title'],['sortArtist','Sort Artist'],['sortAlbum','Sort Album']],
+ ['Identifiers',['isrc','ISRC'],['musicBrainzTrackId','MusicBrainz Track ID'],['musicBrainzAlbumId','MusicBrainz Album ID'],['musicBrainzArtistId','MusicBrainz Artist ID']]
+];
+function metadataEditorSong(){if(currentQueueIndex<0||!playbackQueue[currentQueueIndex])return null;const q=playbackQueue[currentQueueIndex];return q.song||q;}
+function metadataEditorInitialValues(song){return {title:song.title||'',artist:song.artist||'',album:song.album||'',albumArtist:song.albumArtist||'',composer:song.composer||'',genre:song.genre||'',year:song.year||'',track:song.track||'',trackTotal:song.trackTotal||'',discNumber:song.discNumber||'',discTotal:song.discTotal||'',label:song.label||'',publisher:song.publisher||'',copyright:song.copyright||'',comment:song.comment||'',conductor:song.conductor||'',remixer:song.remixer||'',sortTitle:song.sortTitle||song.titleSort||'',sortArtist:song.sortArtist||song.artistSort||'',sortAlbum:song.sortAlbum||song.albumSort||'',grouping:song.grouping||'',bpm:song.bpm||'',compilation:song.compilation||'',isrc:song.isrc||'',musicBrainzTrackId:song.musicBrainzTrackId||'',musicBrainzAlbumId:song.musicBrainzAlbumId||'',musicBrainzArtistId:song.musicBrainzArtistId||'',encodedBy:song.encodedBy||song.encoder||''};}
+function openMetadataEditor(){const song=metadataEditorSong();if(!song)return;metadataEditorSongUrl=song.url;switchRightPanelTab('metadata');const root=document.getElementById('metadata-editor-content');if(root)root.innerHTML='';const initial=metadataEditorInitialValues(song);renderMetadataEditor(initial);metadataEditorDirty=false;if(!window.electronAPI?.getAudioMetadata)return;window.electronAPI.getAudioMetadata(song.url).then(r=>{if(metadataEditorSongUrl!==song.url||metadataEditorDirty||!r?.success)return;const metadata=r.metadata||{};Object.keys(initial).forEach(key=>{if(metadata[key]!==undefined&&metadata[key]!==null&&String(metadata[key])!=='')initial[key]=metadata[key];});Object.keys(metadata).forEach(key=>{if(metadata[key]!==undefined&&metadata[key]!==null&&String(metadata[key])!=='')initial[key]=metadata[key];});Object.keys(initial).forEach(key=>{const input=document.querySelector(`#metadata-editor-content [data-metadata-key=\"${key}\"]`);if(input)input.value=Array.isArray(initial[key])?initial[key].join(', '):String(initial[key]??'');});}).catch(()=>{});}
+function renderMetadataEditorError(msg){const r=document.getElementById('metadata-editor-content');if(r)r.innerHTML=`<div class="metadata-editor-state">${escapeHtml(msg)}</div>`;}
+function renderMetadataEditor(m){const root=document.getElementById('metadata-editor-content');if(!root)return;let html='';for(const [title,...fields] of ME_SECTIONS){html+=`<div class="metadata-editor-section"><div class="metadata-editor-section-title">${title}</div>`;for(const [key,label] of fields){const v=m[key]??'';html+=`<label class="metadata-editor-field"><span>${label}</span>${key==='comment'?`<textarea data-metadata-key="${key}" rows="3">${escapeHtml(String(v))}</textarea>`:`<input data-metadata-key="${key}" type="text" value="${escapeHtml(String(v))}">`}</label>`;}html+='</div>';}root.innerHTML=`<div class="metadata-editor-toolbar"><button class="metadata-editor-back" onclick="closeMetadataEditor()" title="Back to Info"><span class="material-symbols-outlined">arrow_back</span></button><div class="metadata-editor-toolbar-title">Edit metadata</div><div class="metadata-editor-toolbar-actions"><button onclick="importMetadataJson()" title="Import metadata from JSON">Import</button><button onclick="exportMetadataJson()" title="Export metadata to JSON">Export</button></div></div><div class="metadata-editor-fields">${html}</div><div class="metadata-editor-actions"><button class="metadata-editor-cancel" onclick="cancelMetadataEditor()">Cancel</button><button class="metadata-editor-save" id="metadata-editor-save" onclick="saveMetadataEditor()" disabled>Save changes</button></div>`;root.querySelectorAll('[data-metadata-key]').forEach(x=>x.addEventListener('input',()=>{metadataEditorDirty=true;document.getElementById('metadata-editor-save').disabled=false;}));}
+function collectMetadataEditorValues(){const r={};document.querySelectorAll('#metadata-editor-content [data-metadata-key]').forEach(x=>r[x.dataset.metadataKey]=x.value);return r;}
+async function saveMetadataEditor(){const song=metadataEditorSong();if(!song||!metadataEditorSongUrl)return;const b=document.getElementById('metadata-editor-save');if(b){b.disabled=true;b.textContent='Saving…';}try{const r=await window.electronAPI.saveAudioMetadata({fileUrl:metadataEditorSongUrl,metadata:collectMetadataEditorValues()});if(!r?.success)throw new Error(r?.error||'Failed to save metadata');const meta=r.metadata||{};Object.keys(meta).forEach(k=>{song[k]=meta[k];SONGS_DATA.filter(s=>s.url===song.url).forEach(s=>s[k]=meta[k]);});metadataEditorDirty=false;showNotification('Metadata saved','success',2500);closeMetadataEditor();updateAlbumArt();}catch(e){showNotification(e.message||'Failed to save metadata','error',4000);if(b){b.disabled=false;b.textContent='Save changes';}}}
+function cancelMetadataEditor(){if(metadataEditorDirty&&!window.confirm('Discard unsaved metadata changes?'))return;closeMetadataEditor();}
+function closeMetadataEditor(){metadataEditorSongUrl=null;metadataEditorDirty=false;switchRightPanelTab('tags');}
+
+async function exportMetadataJson(){
+    if(!metadataEditorSongUrl||!window.electronAPI?.exportAudioMetadataJson)return;
+    const metadata=collectMetadataEditorValues();
+    const r=await window.electronAPI.exportAudioMetadataJson({fileUrl:metadataEditorSongUrl,metadata});
+    if(r?.success)showNotification('Metadata exported','success',2500);
+    else if(!r?.canceled)showNotification(r?.error||'Failed to export metadata','error',4000);
+}
+async function importMetadataJson(){
+    if(!metadataEditorSongUrl||!window.electronAPI?.importAudioMetadataJson)return;
+    const r=await window.electronAPI.importAudioMetadataJson();
+    if(!r?.success){if(!r?.canceled)showNotification(r?.error||'Failed to import metadata','error',4000);return;}
+    const metadata=r.metadata||{};
+    Object.keys(metadata).forEach(key=>{const input=document.querySelector(`#metadata-editor-content [data-metadata-key="${key}"]`);if(input)input.value=Array.isArray(metadata[key])?metadata[key].join(', '):metadata[key]??'';});
+    metadataEditorDirty=true;
+    const b=document.getElementById('metadata-editor-save');if(b){b.disabled=false;b.textContent='Save changes';}
+    showNotification('Metadata imported — review and save','success',3000);
+}

@@ -10,7 +10,7 @@ function toggleRightPanel() {
 
     const isInQueueOrRecents =
         queueContent.classList.contains('active') || recentlyPlayedContent.classList.contains('active');
-    const isInTags = tagsContent.classList.contains('active');
+    const isInTags = tagsContent.classList.contains('active') || document.getElementById('metadata-content')?.classList.contains('active');
 
     if (isInQueueOrRecents) {
         if (lastRightPanelStateBeforeQueue.wasTab === 'tags') {
@@ -74,8 +74,18 @@ function openTagsTab() {
     const recentlyPlayedContent = document.getElementById('recently-played-content');
     const tagsContent = tagsContentElement;
 
+    const metadataContent = document.getElementById('metadata-content');
+    const isInMetadata = metadataContent?.classList.contains('active');
     const isInQueueOrRecents =
         queueContent.classList.contains('active') || recentlyPlayedContent.classList.contains('active');
+
+    if (isInMetadata) {
+        switchRightPanelTab('tags');
+        playerToggleButton.classList.remove('active');
+        playerToggleButton.setAttribute('aria-label', 'Open right panel');
+        updateScrollbarById('right-panel-content');
+        return;
+    }
 
     if (isInQueueOrRecents) {
         switchRightPanelTab('tags');
@@ -723,12 +733,9 @@ function updateInfoButtonVisibility() {
     if (!btn) return;
     const tagsActive = tagsContentElement.classList.contains('active');
     const hasSong = currentQueueIndex >= 0 && playbackQueue[currentQueueIndex];
-    if (tagsActive && hasSong && hasEnabledExtendedFields()) {
-        btn.style.display = 'flex';
-    } else {
-        btn.style.display = 'none';
-    }
+    btn.style.display = tagsActive && hasSong ? 'flex' : 'none';
 }
+
 
 function openExtendedInfoPanel() {
     const overlay = document.getElementById('extended-info-overlay');
@@ -821,9 +828,9 @@ function switchRightPanelTab(tab) {
 
     const headerContent = document.querySelector('.right-panel-header-content');
     if (headerContent) {
-        headerContent.classList.remove('queue-mode', 'tags-mode');
-        if (tab === 'tags') {
-            headerContent.classList.add('tags-mode');
+        headerContent.classList.remove('queue-mode', 'tags-mode', 'metadata-mode');
+        if (tab === 'tags' || tab === 'metadata') {
+            headerContent.classList.add(tab === 'metadata' ? 'metadata-mode' : 'tags-mode');
         } else {
             headerContent.classList.add('queue-mode');
         }
@@ -871,6 +878,13 @@ function updateRightPanelHeader(tab) {
         headerTitle.style.pointerEvents = 'auto';
         headerTitle.style.cursor = 'pointer';
         headerTitle.setAttribute('onclick', 'switchToQueuePanel()');
+    } else if (tab === 'metadata') {
+        headerTitle.textContent = 'Metadata';
+        headerTitle.classList.add('active-underline');
+        recentText.style.display = 'none';
+        headerTitle.style.pointerEvents = 'auto';
+        headerTitle.style.cursor = 'pointer';
+        headerTitle.setAttribute('onclick', 'closeMetadataEditor()');
     } else if (tab === 'tags') {
         const sourceName = getCurrentPlayingSourceName();
         headerTitle.textContent = sourceName;

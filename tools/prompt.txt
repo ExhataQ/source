@@ -246,3 +246,17 @@ Online lyrics result behavior:
 - The song picker is a modal overlay with a prefilled search input (LRCLIB track title plus artist name) and a scrollable list of getActiveSongs() filtered by title, artist, or album substring. Picking a song attaches the LRC or plain lyrics to it and closes the picker. The list uses the app's custom scrollbar.
 
 Online lyrics: The global header can open the online lyrics view before the regular Lyrics view has been visited, so the online lyrics renderer initializes its own lyrics-view-root when needed.
+
+Metadata editor:
+- `src/js/20-metadata-editor.js` provides the right-panel Metadata editor view.
+- The edit button beside the Info title opens Metadata; the Metadata view has a back control to return to Info.
+- `electron/metadata-editor.js` and `electron/metadata-editor.py` read/write common audio tags through Python mutagen.
+- Saved metadata is written to the audio file and mirrored into deployed `MusicPlayerOutput/player.js` so library data remains current.
+
+- `src/js/20-metadata-editor.js` provides the right-panel Metadata editor view, loads existing file tags into the editor, supports editing/saving, and supports ExhataQ JSON metadata import/export.
+- `electron/metadata-editor.js` and `electron/metadata-editor.py` read/write common audio tags through Python mutagen; the writer uses the destination audio format so imported ExhataQ JSON can be applied across supported audio types.
+- `electron/main.js` and `electron/preload.js` expose metadata read/write and ExhataQ JSON import/export IPC operations, including native file dialogs for JSON files.
+- Metadata editor opens without a loading message and initially renders metadata already available on the selected song; direct audio-tag reading then refreshes it when successful. Scanner aliases titleSort/artistSort/albumSort/encoder are mapped to the editor fields.
+- Metadata import/export uses ordinary .json files; the JSON payload remains versioned but the filename extension is standard JSON.
+
+- Metadata editor loads initial song metadata immediately and supplements it asynchronously from the audio file without clearing non-empty values or rebuilding the form.
